@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { Send } from 'lucide-react'
 
 interface Message {
@@ -49,24 +48,20 @@ export default function AdminMessageThread({ clientId }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const fetchMessages = useCallback(async () => {
-    const { data, error } = await supabaseAdmin
-      .from('messages')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: true })
-    if (error) console.error('admin messages fetch:', error)
-    setMessages(data ?? [])
+    const res = await fetch(`/api/admin/messages?clientId=${clientId}`)
+    if (!res.ok) { console.error('admin messages fetch:', res.status, await res.text()); return }
+    const data = await res.json()
+    setMessages(data)
     setLoading(false)
   }, [clientId])
 
   // Mark client messages as read when thread is viewed
   const markClientRead = useCallback(async () => {
-    await supabaseAdmin
-      .from('messages')
-      .update({ read: true })
-      .eq('client_id', clientId)
-      .eq('author_role', 'client')
-      .eq('read', false)
+    await fetch('/api/admin/messages', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId }),
+    })
   }, [clientId])
 
   useEffect(() => {
@@ -92,20 +87,15 @@ export default function AdminMessageThread({ clientId }: Props) {
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    const { error } = await supabaseAdmin
-      .from('messages')
-      .insert({ client_id: clientId, author_role: 'studio', body, read: false })
+    const res = await fetch('/api/admin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, body }),
+    })
 
-    if (error) {
-      console.error('admin send error:', error)
+    if (!res.ok) {
+      console.error('admin send error:', res.status, await res.text())
     } else {
-      // Mark all client messages as read after studio replies
-      await supabaseAdmin
-        .from('messages')
-        .update({ read: true })
-        .eq('client_id', clientId)
-        .eq('author_role', 'client')
-        .eq('read', false)
       await fetchMessages()
     }
     setSending(false)

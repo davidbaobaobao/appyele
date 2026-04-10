@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ArrowLeft, Copy, ExternalLink, Check } from 'lucide-react'
 import AdminMessageThread from '@/components/admin/AdminMessageThread'
 
@@ -75,12 +74,13 @@ export default function ClientDetailPage() {
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabaseAdmin
-        .from('clients')
-        .select('*')
-        .eq('id', clientId)
-        .single()
-      if (error) { console.error('client detail fetch:', error); setLoading(false); return }
+      const res = await fetch(`/api/admin/clients/${clientId}`)
+      if (!res.ok) {
+        console.error('client detail fetch:', res.status, await res.text())
+        setLoading(false)
+        return
+      }
+      const data = await res.json()
       setClient(data)
       setStatus(data.status)
       setLoading(false)
@@ -91,13 +91,14 @@ export default function ClientDetailPage() {
   const handleStatusChange = async (newStatus: ClientStatus) => {
     setStatus(newStatus)
     setSavingStatus(true)
-    const { error } = await supabaseAdmin
-      .from('clients')
-      .update({ status: newStatus })
-      .eq('id', clientId)
+    const res = await fetch(`/api/admin/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
     setSavingStatus(false)
-    if (error) {
-      console.error('status update error:', error)
+    if (!res.ok) {
+      console.error('status update error:', res.status, await res.text())
       showToast('Error al actualizar el estado', 'error')
     } else {
       setClient((prev) => prev ? { ...prev, status: newStatus } : prev)

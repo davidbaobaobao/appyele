@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { Search } from 'lucide-react'
 
 type ClientStatus = 'intake_pending' | 'building' | 'live' | 'paused' | 'cancelled'
@@ -44,29 +43,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function load() {
-      // Fetch all clients sorted by newest first
-      const { data: clientRows, error } = await supabaseAdmin
-        .from('clients')
-        .select('id, business_name, city, industry_type, plan, status, created_at')
-        .order('created_at', { ascending: false })
-
-      if (error) { console.error('admin clients fetch:', error); setLoading(false); return }
-
-      // Fetch unread counts (author_role = 'client', read = false) per client
-      const { data: unreadRows } = await supabaseAdmin
-        .from('messages')
-        .select('client_id')
-        .eq('author_role', 'client')
-        .eq('read', false)
-
-      const unreadMap: Record<string, number> = {}
-      for (const row of unreadRows ?? []) {
-        unreadMap[row.client_id] = (unreadMap[row.client_id] ?? 0) + 1
+      const res = await fetch('/api/admin/clients')
+      if (!res.ok) {
+        console.error('admin clients fetch:', res.status, await res.text())
+        setLoading(false)
+        return
       }
-
-      setClients(
-        (clientRows ?? []).map((c) => ({ ...c, unread_count: unreadMap[c.id] ?? 0 }))
-      )
+      const data = await res.json()
+      setClients(data)
       setLoading(false)
     }
     load()
