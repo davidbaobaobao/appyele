@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
@@ -19,11 +19,16 @@ export default function Sidebar() {
   const router = useRouter()
   const [businessName, setBusinessName] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     async function loadClientData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+        setIsAdmin(true)
+      }
 
       const { data: client } = await supabase
         .from('clients')
@@ -121,6 +126,26 @@ export default function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Admin link */}
+      {isAdmin && (
+        <div className="px-3 pb-1">
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
+            style={{ color: '#E05A2B' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(224,90,43,0.08)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <ShieldCheck size={16} strokeWidth={1.75} />
+            <span>Panel admin</span>
+          </Link>
+        </div>
+      )}
 
       {/* Logout */}
       <div className="px-3 pb-6">
