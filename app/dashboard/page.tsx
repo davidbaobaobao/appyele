@@ -36,23 +36,37 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadClient() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { console.log('dashboard: no user session'); setLoading(false); return }
 
-      const { data, error } = await supabase
-        .from('clients')
-        .select('id, business_name, plan, status, city, website_url')
-        .eq('user_id', user.id)
-        .single()
+        console.log('dashboard: fetching client for user_id', user.id)
 
-      if (error) console.error('dashboard fetch error:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-      })
-      setClient(data)
-      setLoading(false)
+        const { data, error } = await supabase
+          .from('clients')
+          .select('id, business_name, plan, status, city, website_url')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error) {
+          console.error('dashboard fetch error:', {
+            message: error?.message,
+            code: error?.code,
+            details: error?.details,
+            hint: error?.hint,
+          })
+        }
+        console.log('dashboard: client data', data)
+        setClient(data)
+        setLoading(false)
+      } catch (e: unknown) {
+        const err = e as Error
+        console.error('dashboard loadClient threw:', e)
+        console.error('Error name:', err?.name)
+        console.error('Error message:', err?.message)
+        console.error('Error stack:', err?.stack)
+        setLoading(false)
+      }
     }
     loadClient()
   }, [])
