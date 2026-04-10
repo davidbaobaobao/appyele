@@ -45,7 +45,12 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .single()
 
-      if (error) console.error('dashboard fetch error:', error)
+      if (error) console.error('dashboard fetch error:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+      })
       setClient(data)
       setLoading(false)
     }
