@@ -43,10 +43,10 @@ export default function NegocioPage() {
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const addToast = useCallback((message: string, type: ToastType) => {
+  const addToast = useCallback((message: string, type: ToastType, duration = 3000) => {
     const id = Date.now()
     setToasts((prev) => [...prev.slice(-2), { id, message, type }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000)
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), duration)
   }, [])
 
   useEffect(() => {
@@ -116,7 +116,7 @@ export default function NegocioPage() {
       addToast('Error al guardar los cambios', 'error')
     } else {
       setDirty(false)
-      addToast('Cambios guardados', 'success')
+      addToast('✓ Cambios guardados. Los cambios aparecerán en tu web en menos de 60 segundos.', 'success', 8000)
     }
   }
 
@@ -303,7 +303,7 @@ export default function NegocioPage() {
         </div>
 
         {/* Toasts */}
-        <div className="fixed bottom-5 right-5 space-y-2 z-50">
+        <div className="fixed bottom-5 right-5 space-y-2 z-50 max-w-sm">
           {toasts.map((toast) => (
             <div
               key={toast.id}

@@ -16,6 +16,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
       { key: 'category',   label: 'Categoría',   type: 'text',     placeholder: 'Ej. Arroces' },
       { key: 'description', label: 'Descripción', type: 'textarea', placeholder: 'Describe el producto…' },
       { key: 'price',       label: 'Precio',      type: 'text',     placeholder: 'Ej. 14,50 €' },
+      { key: 'image_url',   label: 'Imagen',      type: 'image' },
       { key: 'available',   label: 'Disponible',  type: 'toggle' },
     ],
   },
@@ -35,7 +36,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     fields: [
       { key: 'name',      label: 'Nombre',    type: 'text', required: true },
       { key: 'role',      label: 'Cargo',     type: 'text' },
-      { key: 'photo_url', label: 'URL foto',  type: 'url' },
+      { key: 'photo_url', label: 'Foto',  type: 'image' },
     ],
   },
   testimonials: {
@@ -82,7 +83,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     title: 'Galería',
     icon: <Image size={14} />,
     fields: [
-      { key: 'image_url', label: 'URL de imagen', type: 'url',  required: true },
+      { key: 'image_url', label: 'Imagen', type: 'image' },
       { key: 'caption',   label: 'Descripción',   type: 'text' },
       { key: 'category',  label: 'Categoría',     type: 'text' },
     ],
@@ -91,6 +92,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
 
 export default function ContenidoPage() {
   const [clientId, setClientId] = useState<string | null>(null)
+  const [clientSlug, setClientSlug] = useState<string>('')
   const [dynamicSections, setDynamicSections] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -101,7 +103,7 @@ export default function ContenidoPage() {
 
       const { data: client, error } = await supabase
         .from('clients')
-        .select('id, dynamic_sections')
+        .select('id, slug, dynamic_sections')
         .eq('user_id', user.id)
         .single()
 
@@ -109,6 +111,7 @@ export default function ContenidoPage() {
 
       if (client) {
         setClientId(client.id)
+        setClientSlug(client.slug ?? '')
         setDynamicSections(client.dynamic_sections ?? [])
       }
       setLoading(false)
@@ -160,6 +163,7 @@ export default function ContenidoPage() {
                     key={sectionKey}
                     sectionKey={sectionKey}
                     clientId={clientId}
+                    clientSlug={clientSlug}
                     title={config.title}
                     icon={config.icon}
                     fields={config.fields}

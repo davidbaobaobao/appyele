@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase as supabaseClient } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Pencil, Trash2, X, Star } from 'lucide-react'
+import ImageUpload from '@/components/ImageUpload'
 
 export interface FieldDef {
   key: string
   label: string
-  type: 'text' | 'textarea' | 'number' | 'url' | 'tel' | 'email' | 'date' | 'toggle' | 'select'
+  type: 'text' | 'textarea' | 'number' | 'url' | 'tel' | 'email' | 'date' | 'toggle' | 'select' | 'image'
   placeholder?: string
   options?: string[]
   required?: boolean
@@ -17,6 +18,7 @@ export interface FieldDef {
 interface CardManagerProps {
   sectionKey: string
   clientId: string
+  clientSlug?: string
   title: string
   icon?: React.ReactNode
   fields: FieldDef[]
@@ -207,7 +209,9 @@ function renderCard(sectionKey: string, item: RecordData) {
   }
 }
 
-export default function CardManager({ sectionKey, clientId, title, icon, fields }: CardManagerProps) {
+const SAVED_NOTICE = 'Los cambios aparecerán en tu web en menos de 60 segundos.'
+
+export default function CardManager({ sectionKey, clientId, clientSlug, title, icon, fields }: CardManagerProps) {
   const supabase = supabaseClient
   const [items, setItems] = useState<RecordData[]>([])
   const [loading, setLoading] = useState(true)
@@ -217,10 +221,12 @@ export default function CardManager({ sectionKey, clientId, title, icon, fields 
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const showToast = useCallback((msg: string) => {
+  const showToast = useCallback((msg: string, duration = 8000) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
     setToastMsg(msg)
-    setTimeout(() => setToastMsg(null), 3000)
+    toastTimer.current = setTimeout(() => setToastMsg(null), duration)
   }, [])
 
   const fetchItems = useCallback(async () => {
@@ -263,12 +269,25 @@ export default function CardManager({ sectionKey, clientId, title, icon, fields 
         .from(sectionKey)
         .update(formData)
         .eq('id', editingItem.id as string)
-      if (!error) { showToast('Elemento actualizado'); fetchItems() }
+      if (!error) { showToast(`✓ Elemento actualizado. ${SAVED_NOTICE}`); fetchItems() }
     } else {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('Inserting with client_id:', clientId)
+      console.log('Auth user id:            ', user?.id)
+      console.log('Are they different?      ', clientId !== user?.id)
+
+      const { data, error } = await supabase
         .from(sectionKey)
         .insert({ ...formData, client_id: clientId })
-      if (!error) { showToast('Elemento añadido'); fetchItems() }
+        .select()
+      if (error) {
+        console.error('Full error:', JSON.stringify(error))
+        alert('Error guardando: ' + error.message + ' — code: ' + error.code)
+      } else {
+        console.log('Insert success:', data)
+        showToast(`✓ Elemento añadido. ${SAVED_NOTICE}`)
+        fetchItems()
+      }
     }
     setSaving(false)
     setPanelOpen(false)
@@ -276,7 +295,7 @@ export default function CardManager({ sectionKey, clientId, title, icon, fields 
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from(sectionKey).delete().eq('id', id)
-    if (!error) { showToast('Elemento eliminado'); fetchItems() }
+    if (!error) { showToast(`✓ Elemento eliminado. ${SAVED_NOTICE}`); fetchItems() }
     setConfirmDelete(null)
   }
 
@@ -435,7 +454,14 @@ export default function CardManager({ sectionKey, clientId, title, icon, fields 
                       {field.required && <span style={{ color: '#E8A020' }}> *</span>}
                     </label>
 
-                    {field.type === 'toggle' ? (
+                    {field.type === 'image' ? (
+                      <ImageUpload
+                        value={String(formData[field.key] ?? '')}
+                        onChange={(url) => setFormData((p) => ({ ...p, [field.key]: url }))}
+                        clientSlug={clientSlug ?? 'unknown'}
+                        tableName={sectionKey}
+                      />
+                    ) : field.type === 'toggle' ? (
                       <button
                         type="button"
                         onClick={() => setFormData((p) => ({ ...p, [field.key]: !p[field.key] }))}
@@ -575,7 +601,7 @@ export default function CardManager({ sectionKey, clientId, title, icon, fields 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-sm font-medium shadow-lg"
+            className="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-sm font-medium shadow-lg max-w-sm"
             style={{
               backgroundColor: 'rgba(42,138,90,0.15)',
               border: '1px solid rgba(42,138,90,0.4)',
