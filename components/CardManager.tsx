@@ -3,8 +3,25 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase as supabaseClient } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Pencil, Trash2, X, Star } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Star, GripVertical } from 'lucide-react'
 import ImageUpload from '@/components/ImageUpload'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export interface FieldDef {
   key: string
@@ -209,12 +226,65 @@ function renderCard(sectionKey: string, item: RecordData) {
   }
 }
 
+function SortableCard({
+  id,
+  children,
+}: {
+  id: string
+  children: React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 10 : 'auto',
+        position: 'relative',
+        boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.3)' : 'none',
+      }}
+      className="group/sortable flex items-stretch gap-2"
+    >
+      {/* Drag handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        title="Arrastra para reordenar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          color: 'rgba(255,255,255,0.2)',
+          flexShrink: 0,
+          padding: '0 2px',
+          touchAction: 'none',
+          transition: 'color 0.15s',
+        }}
+        className="opacity-0 group-hover/sortable:opacity-100 transition-opacity"
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.2)' }}
+      >
+        <GripVertical size={16} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </div>
+  )
+}
+
 const SAVED_NOTICE = 'Los cambios aparecerán en tu web en menos de 60 segundos.'
 
 export default function CardManager({ sectionKey, clientId, clientSlug, title, icon, fields }: CardManagerProps) {
   const supabase = supabaseClient
   const [items, setItems] = useState<RecordData[]>([])
   const [loading, setLoading] = useState(true)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const [panelOpen, setPanelOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<RecordData | null>(null)
   const [formData, setFormData] = useState<RecordData>({})
@@ -234,6 +304,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
       .from(sectionKey)
       .select('*')
       .eq('client_id', clientId)
+      .order('sort_order', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true })
     setItems(data ?? [])
     setLoading(false)
@@ -299,6 +370,30 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
     setConfirmDelete(null)
   }
 
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = items.findIndex((i) => String(i.id) === active.id)
+    const newIndex = items.findIndex((i) => String(i.id) === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newItems = arrayMove(items, oldIndex, newIndex)
+    setItems(newItems) // optimistic
+
+    await Promise.all(
+      newItems.map((item, index) =>
+        supabase
+          .from(sectionKey)
+          .update({ sort_order: index })
+          .eq('id', item.id as string)
+          .eq('client_id', clientId)
+      )
+    )
+
+    showToast(`✓ Orden guardado. ${SAVED_NOTICE}`)
+  }, [items, supabase, sectionKey, clientId, showToast])
+
   const inputStyle = {
     backgroundColor: '#0F1923',
     border: '1px solid rgba(45,63,82,0.6)',
@@ -362,38 +457,50 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {items.map((item) => (
-              <div
-                key={String(item.id)}
-                className="rounded-lg p-4 relative group"
-                style={{ backgroundColor: '#0F1923', border: '1px solid rgba(45,63,82,0.4)' }}
-              >
-                {renderCard(sectionKey, item)}
-                {/* Action buttons */}
-                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditPanel(item)}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{ backgroundColor: 'rgba(45,63,82,0.8)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(232,160,32,0.2)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,63,82,0.8)' }}
-                  >
-                    <Pencil size={12} style={{ color: '#8A9BAD' }} />
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(String(item.id))}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{ backgroundColor: 'rgba(45,63,82,0.8)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(196,58,42,0.2)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,63,82,0.8)' }}
-                  >
-                    <Trash2 size={12} style={{ color: '#8A9BAD' }} />
-                  </button>
-                </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={items.map((item) => String(item.id))}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="flex flex-col gap-2">
+                {items.map((item) => (
+                  <SortableCard key={String(item.id)} id={String(item.id)}>
+                    <div
+                      className="rounded-lg p-4 relative group"
+                      style={{ backgroundColor: '#0F1923', border: '1px solid rgba(45,63,82,0.4)' }}
+                    >
+                      {renderCard(sectionKey, item)}
+                      {/* Action buttons */}
+                      <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => openEditPanel(item)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ backgroundColor: 'rgba(45,63,82,0.8)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(232,160,32,0.2)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,63,82,0.8)' }}
+                        >
+                          <Pencil size={12} style={{ color: '#8A9BAD' }} />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(String(item.id))}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ backgroundColor: 'rgba(45,63,82,0.8)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(196,58,42,0.2)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,63,82,0.8)' }}
+                        >
+                          <Trash2 size={12} style={{ color: '#8A9BAD' }} />
+                        </button>
+                      </div>
+                    </div>
+                  </SortableCard>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
