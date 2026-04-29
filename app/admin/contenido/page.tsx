@@ -115,10 +115,13 @@ function ShowcaseSection() {
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
     if (!confirm('¿Eliminar este proyecto? Esta acción no se puede deshacer.')) return
     try {
-      const { error } = await supabase.from('showcase_projects').delete().eq('id', item.id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/showcase/${item.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        return
+      }
       setItems(prev => prev.filter((_, i) => i !== idx))
-      await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error eliminando showcase:', err)
@@ -289,10 +292,13 @@ function TestimonialsSection() {
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
     if (!confirm('¿Eliminar este testimonio? Esta acción no se puede deshacer.')) return
     try {
-      const { error } = await supabase.from('testimonials').delete().eq('id', item.id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/testimonials/${item.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        return
+      }
       setItems(prev => prev.filter((_, i) => i !== idx))
-      await revalidateYeleSite('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error eliminando testimonio:', err)
@@ -438,10 +444,13 @@ function FAQsSection() {
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
     if (!confirm('¿Eliminar esta pregunta? Esta acción no se puede deshacer.')) return
     try {
-      const { error } = await supabase.from('faqs').delete().eq('id', item.id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/faqs/${item.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        return
+      }
       setItems(prev => prev.filter((_, i) => i !== idx))
-      await revalidateYeleSite('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error eliminando FAQ:', err)
