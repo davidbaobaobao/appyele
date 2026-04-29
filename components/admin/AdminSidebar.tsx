@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, LogOut, LayoutDashboard } from 'lucide-react'
+import { Users, LogOut, LayoutDashboard, LayoutGrid } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 // Red-orange accent to distinguish admin from client view
@@ -11,7 +11,8 @@ const ACCENT_BG = 'rgba(224,90,43,0.08)'
 const ACCENT_BORDER = '#E05A2B'
 
 const NAV_ITEMS = [
-  { label: 'Clientes', href: '/admin', icon: Users },
+  { label: 'Clientes',  href: '/admin',           icon: Users },
+  { label: 'Contenido', href: '/admin/contenido',  icon: LayoutGrid },
 ]
 
 export default function AdminSidebar() {
@@ -47,8 +48,10 @@ export default function AdminSidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon
-          // /admin matches exactly, or /admin/[clientId]
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          // /admin: matches exactly or /admin/[clientId] (uuid routes), but NOT /admin/contenido
+          const isActive = item.href === '/admin'
+            ? (pathname === '/admin' || (pathname.startsWith('/admin/') && !pathname.startsWith('/admin/contenido')))
+            : (pathname === item.href || pathname.startsWith(item.href + '/'))
 
           return (
             <Link
