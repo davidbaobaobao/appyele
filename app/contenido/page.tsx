@@ -7,6 +7,7 @@ import ImageUploader from '@/components/ImageUploader'
 import TopBar from '@/components/TopBar'
 import Sidebar from '@/components/Sidebar'
 import CardManager, { FieldDef } from '@/components/CardManager'
+import { revalidateYeleSite } from '@/lib/revalidate'
 
 // ── Admin-only Showcase Section ───────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ function AdminShowcaseSection() {
   }, [])
 
   function newItem(): ShowcaseProject {
-    return { name: '', description: '', main_image: '', additional_images: [], visible: true, sort_order: items.length }
+    return { name: '', description: '', main_image: '', additional_images: [], visible: true, sort_order: 0 }
   }
 
   function update(idx: number, patch: Partial<ShowcaseProject>) {
@@ -55,25 +56,48 @@ function AdminShowcaseSection() {
   async function save(idx: number) {
     const item = items[idx]
     setSaving(String(idx))
-    const payload: Partial<ShowcaseProject> = {
-      name: item.name,
-      description: item.description,
-      main_image: item.main_image,
-      additional_images: item.additional_images,
-      visible: item.visible,
-      sort_order: item.sort_order,
-    }
-    if (item.id) payload.id = item.id
-    const res = await fetch('/api/admin/showcase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    const saved = await res.json()
-    if (saved && !saved.error) {
+    try {
+      let sortOrder = item.sort_order
+      if (!item.id) {
+        const { data: maxData } = await supabase
+          .from('showcase_projects')
+          .select('sort_order')
+          .order('sort_order', { ascending: false })
+          .limit(1)
+        sortOrder = (maxData?.[0]?.sort_order ?? 0) + 1
+      }
+
+      const payload = {
+        name: item.name,
+        description: item.description || '',
+        main_image: item.main_image,
+        additional_images: Array.isArray(item.additional_images) ? item.additional_images.filter(Boolean) : [],
+        visible: item.visible,
+        sort_order: sortOrder,
+      }
+
+      let saved: ShowcaseProject
+      if (item.id) {
+        const { data, error } = await supabase
+          .from('showcase_projects').update(payload).eq('id', item.id).select().single()
+        if (error) throw error
+        saved = data
+      } else {
+        const { data, error } = await supabase
+          .from('showcase_projects').insert(payload).select().single()
+        if (error) throw error
+        saved = data
+      }
+
       setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+      await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error guardando showcase:', err)
+      alert('Error guardando: ' + msg)
+    } finally {
+      setSaving(null)
     }
-    setSaving(null)
   }
 
   async function remove(idx: number) {
@@ -143,24 +167,18 @@ function AdminShowcaseSection() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <label style={SS.label}>Orden</label>
-                  <input type="number" style={{ ...SS.input, width: '70px' }} value={item.sort_order} onChange={e => update(idx, { sort_order: Number(e.target.value) })} />
-                </div>
-                <div className="flex items-end gap-2 pb-0.5 mt-auto">
-                  <button style={SS.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
-                    {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-                    {item.visible ? 'Visible' : 'Oculto'}
-                  </button>
-                  <button style={SS.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
-                    <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                    {saving === String(idx) ? 'Guardando…' : 'Guardar'}
-                  </button>
-                  <button style={SS.btnDanger} onClick={() => remove(idx)}>
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <button style={SS.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+                  {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
+                  {item.visible ? 'Visible' : 'Oculto'}
+                </button>
+                <button style={SS.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+                  <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
+                  {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+                </button>
+                <button style={SS.btnDanger} onClick={() => remove(idx)}>
+                  <Trash2 size={13} />
+                </button>
               </div>
             </div>
           </div>

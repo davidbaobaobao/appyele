@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Trash2, Save, Eye, EyeOff, GripVertical, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import ImageUploader from '@/components/ImageUploader'
+import { revalidateYeleSite } from '@/lib/revalidate'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,18 +59,17 @@ function ShowcaseSection() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data } = await supabase.from('showcase_projects').select('*').order('sort_order', { ascending: true })
-        setItems(data ?? [])
-      } finally { setLoading(false) }
-    }
-    load()
-  }, [])
+  async function load() {
+    try {
+      const { data } = await supabase.from('showcase_projects').select('*').order('sort_order', { ascending: true })
+      setItems(data ?? [])
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
 
   function newItem(): ShowcaseProject {
-    return { name: '', description: '', main_image: '', additional_images: [], visible: true, sort_order: items.length }
+    return { name: '', description: '', main_image: '', additional_images: [], visible: true, sort_order: 0 }
   }
 
   function update(idx: number, patch: Partial<ShowcaseProject>) {
@@ -79,14 +79,48 @@ function ShowcaseSection() {
   async function save(idx: number) {
     const item = items[idx]
     setSaving(String(idx))
-    const res = await fetch('/api/admin/showcase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    })
-    const saved = await res.json()
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
-    setSaving(null)
+    try {
+      let sortOrder = item.sort_order
+      if (!item.id) {
+        const { data: maxData } = await supabase
+          .from('showcase_projects')
+          .select('sort_order')
+          .order('sort_order', { ascending: false })
+          .limit(1)
+        sortOrder = (maxData?.[0]?.sort_order ?? 0) + 1
+      }
+
+      const payload = {
+        name: item.name,
+        description: item.description || '',
+        main_image: item.main_image,
+        additional_images: Array.isArray(item.additional_images) ? item.additional_images.filter(Boolean) : [],
+        visible: item.visible,
+        sort_order: sortOrder,
+      }
+
+      let saved: ShowcaseProject
+      if (item.id) {
+        const { data, error } = await supabase
+          .from('showcase_projects').update(payload).eq('id', item.id).select().single()
+        if (error) throw error
+        saved = data
+      } else {
+        const { data, error } = await supabase
+          .from('showcase_projects').insert(payload).select().single()
+        if (error) throw error
+        saved = data
+      }
+
+      setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+      await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error guardando showcase:', err)
+      alert('Error guardando: ' + msg)
+    } finally {
+      setSaving(null)
+    }
   }
 
   async function remove(idx: number) {
@@ -156,24 +190,18 @@ function ShowcaseSection() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <label style={S.label}>Orden</label>
-                  <input type="number" style={{ ...S.input, width: '70px' }} value={item.sort_order} onChange={e => update(idx, { sort_order: Number(e.target.value) })} />
-                </div>
-                <div className="flex items-end gap-2 pb-0.5 mt-auto">
-                  <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
-                    {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-                    {item.visible ? 'Visible' : 'Oculto'}
-                  </button>
-                  <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
-                    <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                    {saving === String(idx) ? 'Guardando…' : 'Guardar'}
-                  </button>
-                  <button style={S.btnDanger} onClick={() => remove(idx)}>
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+                  {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
+                  {item.visible ? 'Visible' : 'Oculto'}
+                </button>
+                <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+                  <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
+                  {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+                </button>
+                <button style={S.btnDanger} onClick={() => remove(idx)}>
+                  <Trash2 size={13} />
+                </button>
               </div>
             </div>
           </div>
@@ -197,18 +225,17 @@ function TestimonialsSection() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data } = await supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
-        setItems(data ?? [])
-      } finally { setLoading(false) }
-    }
-    load()
-  }, [])
+  async function load() {
+    try {
+      const { data } = await supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
+      setItems(data ?? [])
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
 
   function newItem(): Testimonial {
-    return { author: '', role: '', text: '', visible: true, sort_order: items.length }
+    return { author: '', role: '', text: '', visible: true, sort_order: 0 }
   }
 
   function update(idx: number, patch: Partial<Testimonial>) {
@@ -218,14 +245,44 @@ function TestimonialsSection() {
   async function save(idx: number) {
     const item = items[idx]
     setSaving(String(idx))
-    const res = await fetch('/api/admin/testimonials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    })
-    const saved = await res.json()
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
-    setSaving(null)
+    try {
+      let sortOrder = item.sort_order
+      if (!item.id) {
+        const { data: maxData } = await supabase
+          .from('testimonials').select('sort_order').order('sort_order', { ascending: false }).limit(1)
+        sortOrder = (maxData?.[0]?.sort_order ?? 0) + 1
+      }
+
+      const payload = {
+        author: item.author,
+        role: item.role || '',
+        text: item.text,
+        visible: item.visible,
+        sort_order: sortOrder,
+      }
+
+      let saved: Testimonial
+      if (item.id) {
+        const { data, error } = await supabase
+          .from('testimonials').update(payload).eq('id', item.id).select().single()
+        if (error) throw error
+        saved = data
+      } else {
+        const { data, error } = await supabase
+          .from('testimonials').insert(payload).select().single()
+        if (error) throw error
+        saved = data
+      }
+
+      setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+      await revalidateYeleSite('/')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error guardando testimonio:', err)
+      alert('Error guardando: ' + msg)
+    } finally {
+      setSaving(null)
+    }
   }
 
   async function remove(idx: number) {
@@ -263,7 +320,6 @@ function TestimonialsSection() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <input type="number" style={{ ...S.input, width: '70px' }} value={item.sort_order} onChange={e => update(idx, { sort_order: Number(e.target.value) })} />
               <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
                 {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
                 {item.visible ? 'Visible' : 'Oculto'}
@@ -297,18 +353,17 @@ function FAQsSection() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data } = await supabase.from('faqs').select('*').order('sort_order', { ascending: true })
-        setItems(data ?? [])
-      } finally { setLoading(false) }
-    }
-    load()
-  }, [])
+  async function load() {
+    try {
+      const { data } = await supabase.from('faqs').select('*').order('sort_order', { ascending: true })
+      setItems(data ?? [])
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
 
   function newItem(): FAQItem {
-    return { question: '', answer: '', visible: true, sort_order: items.length }
+    return { question: '', answer: '', visible: true, sort_order: 0 }
   }
 
   function update(idx: number, patch: Partial<FAQItem>) {
@@ -318,14 +373,43 @@ function FAQsSection() {
   async function save(idx: number) {
     const item = items[idx]
     setSaving(String(idx))
-    const res = await fetch('/api/admin/faqs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    })
-    const saved = await res.json()
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
-    setSaving(null)
+    try {
+      let sortOrder = item.sort_order
+      if (!item.id) {
+        const { data: maxData } = await supabase
+          .from('faqs').select('sort_order').order('sort_order', { ascending: false }).limit(1)
+        sortOrder = (maxData?.[0]?.sort_order ?? 0) + 1
+      }
+
+      const payload = {
+        question: item.question,
+        answer: item.answer,
+        visible: item.visible,
+        sort_order: sortOrder,
+      }
+
+      let saved: FAQItem
+      if (item.id) {
+        const { data, error } = await supabase
+          .from('faqs').update(payload).eq('id', item.id).select().single()
+        if (error) throw error
+        saved = data
+      } else {
+        const { data, error } = await supabase
+          .from('faqs').insert(payload).select().single()
+        if (error) throw error
+        saved = data
+      }
+
+      setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+      await revalidateYeleSite('/')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error guardando FAQ:', err)
+      alert('Error guardando: ' + msg)
+    } finally {
+      setSaving(null)
+    }
   }
 
   async function remove(idx: number) {
@@ -357,7 +441,6 @@ function FAQsSection() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <input type="number" style={{ ...S.input, width: '70px' }} value={item.sort_order} onChange={e => update(idx, { sort_order: Number(e.target.value) })} />
               <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
                 {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
                 {item.visible ? 'Visible' : 'Oculto'}
