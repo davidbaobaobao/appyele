@@ -125,8 +125,8 @@ function renderCard(sectionKey: string, item: RecordData) {
           )}
           <div className="text-xs font-medium" style={{ color: '#F5F2EE' }}>
             {String(item.author_name || '')}
-            {item.author_role && (
-              <span style={{ color: '#8A9BAD' }}> · {String(item.author_role)}</span>
+            {item.role && (
+              <span style={{ color: '#8A9BAD' }}> · {String(item.role)}</span>
             )}
           </div>
         </div>
