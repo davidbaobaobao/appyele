@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { isAdmin } from '@/lib/is-admin'
+import { revalidateYeleSite } from '@/lib/revalidate'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,5 +51,6 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
   return NextResponse.json(data)
 }

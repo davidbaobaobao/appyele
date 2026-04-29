@@ -5,6 +5,7 @@ import { supabase as supabaseClient } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Pencil, Trash2, X, Star, GripVertical } from 'lucide-react'
 import ImageUpload from '@/components/ImageUpload'
+import { revalidateYeleSite } from '@/lib/revalidate'
 import {
   DndContext,
   closestCenter,
@@ -350,7 +351,11 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
         .from(sectionKey)
         .update(coercedData)
         .eq('id', editingItem.id as string)
-      if (!error) { showToast(`✓ Elemento actualizado. ${SAVED_NOTICE}`); fetchItems() }
+      if (!error) {
+        showToast(`✓ Elemento actualizado. ${SAVED_NOTICE}`)
+        fetchItems()
+        revalidateYeleSite('/')
+      }
     } else {
       const { error } = await supabase
         .from(sectionKey)
@@ -361,6 +366,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
       } else {
         showToast(`✓ Elemento añadido. ${SAVED_NOTICE}`)
         fetchItems()
+        revalidateYeleSite('/')
       }
     }
     setSaving(false)
@@ -369,7 +375,11 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from(sectionKey).delete().eq('id', id)
-    if (!error) { showToast(`✓ Elemento eliminado. ${SAVED_NOTICE}`); fetchItems() }
+    if (!error) {
+      showToast(`✓ Elemento eliminado. ${SAVED_NOTICE}`)
+      fetchItems()
+      revalidateYeleSite('/')
+    }
     setConfirmDelete(null)
   }
 
@@ -395,6 +405,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
     )
 
     showToast(`✓ Orden guardado. ${SAVED_NOTICE}`)
+    revalidateYeleSite('/')
   }, [items, supabase, sectionKey, clientId, showToast])
 
   const inputStyle = {

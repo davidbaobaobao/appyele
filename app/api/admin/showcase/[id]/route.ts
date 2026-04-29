@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { isAdmin } from '@/lib/is-admin'
+import { revalidateYeleSite } from '@/lib/revalidate'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,5 +32,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const { error } = await admin.from('showcase_projects').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
   return NextResponse.json({ ok: true })
 }
