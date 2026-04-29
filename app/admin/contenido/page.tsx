@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Save, Eye, EyeOff, GripVertical } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,10 +58,13 @@ function ShowcaseSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/showcase')
-      .then(r => r.json())
-      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false) })
-      .catch(() => setLoading(false))
+    async function load() {
+      try {
+        const { data } = await supabase.from('showcase_projects').select('*').order('sort_order', { ascending: true })
+        setItems(data ?? [])
+      } finally { setLoading(false) }
+    }
+    load()
   }, [])
 
   function newItem(): ShowcaseProject {
@@ -166,7 +170,13 @@ function TestimonialsSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/testimonials').then(r => r.json()).then(d => { setItems(d); setLoading(false) })
+    async function load() {
+      try {
+        const { data } = await supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
+        setItems(data ?? [])
+      } finally { setLoading(false) }
+    }
+    load()
   }, [])
 
   function newItem(): Testimonial {
@@ -260,7 +270,13 @@ function FAQsSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/faqs').then(r => r.json()).then(d => { setItems(d); setLoading(false) })
+    async function load() {
+      try {
+        const { data } = await supabase.from('faqs').select('*').order('sort_order', { ascending: true })
+        setItems(data ?? [])
+      } finally { setLoading(false) }
+    }
+    load()
   }, [])
 
   function newItem(): FAQItem {

@@ -34,10 +34,13 @@ function AdminShowcaseSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/showcase')
-      .then(r => r.json())
-      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false) })
-      .catch(() => setLoading(false))
+    async function load() {
+      try {
+        const { data } = await supabase.from('showcase_projects').select('*').order('sort_order', { ascending: true })
+        setItems(data ?? [])
+      } finally { setLoading(false) }
+    }
+    load()
   }, [])
 
   function newItem(): ShowcaseProject {
