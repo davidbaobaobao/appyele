@@ -57,7 +57,10 @@ function ShowcaseSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/showcase').then(r => r.json()).then(d => { setItems(d); setLoading(false) })
+    fetch('/api/admin/showcase')
+      .then(r => r.json())
+      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   function newItem(): ShowcaseProject {

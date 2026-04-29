@@ -34,7 +34,10 @@ function AdminShowcaseSection() {
   const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/showcase').then(r => r.json()).then(d => { setItems(d); setLoading(false) })
+    fetch('/api/admin/showcase')
+      .then(r => r.json())
+      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   function newItem(): ShowcaseProject {
@@ -48,13 +51,24 @@ function AdminShowcaseSection() {
   async function save(idx: number) {
     const item = items[idx]
     setSaving(String(idx))
+    const payload: Partial<ShowcaseProject> = {
+      name: item.name,
+      description: item.description,
+      main_image: item.main_image,
+      additional_images: item.additional_images,
+      visible: item.visible,
+      sort_order: item.sort_order,
+    }
+    if (item.id) payload.id = item.id
     const res = await fetch('/api/admin/showcase', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
+      body: JSON.stringify(payload),
     })
     const saved = await res.json()
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+    if (saved && !saved.error) {
+      setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
+    }
     setSaving(null)
   }
 

@@ -35,7 +35,7 @@ export async function GET() {
     .order('sort_order', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json(data ?? [])
 }
 
 export async function POST(request: Request) {
@@ -44,9 +44,14 @@ export async function POST(request: Request) {
 
   const body = await request.json()
 
+  // Explicitly whitelist fields — showcase_projects has no client_id column
+  const { id, name, description, main_image, additional_images, visible, sort_order } = body
+  const payload: Record<string, unknown> = { name, description, main_image, additional_images, visible, sort_order }
+  if (id) payload.id = id
+
   const { data, error } = await admin
     .from('showcase_projects')
-    .upsert(body, { onConflict: 'id' })
+    .upsert(payload, { onConflict: 'id' })
     .select()
     .single()
 
