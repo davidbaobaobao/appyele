@@ -44,7 +44,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     icon: <Quote size={14} />,
     fields: [
       { key: 'author_name', label: 'Nombre del autor', type: 'text',     required: true },
-      { key: 'author_role', label: 'Cargo del autor',  type: 'text' },
+      { key: 'role',        label: 'Cargo del autor',  type: 'text' },
       { key: 'body',        label: 'Testimonio',        type: 'textarea', required: true },
       { key: 'rating',      label: 'Valoración (1–5)', type: 'number',   placeholder: '5' },
     ],
