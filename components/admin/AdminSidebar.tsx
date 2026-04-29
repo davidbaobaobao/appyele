@@ -2,22 +2,28 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, LogOut, LayoutDashboard, LayoutGrid } from 'lucide-react'
+import { Users, MessageSquare, LayoutGrid, LogOut, LayoutDashboard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-// Red-orange accent to distinguish admin from client view
-const ACCENT = '#E05A2B'
+const ACCENT    = '#E05A2B'
 const ACCENT_BG = 'rgba(224,90,43,0.08)'
-const ACCENT_BORDER = '#E05A2B'
 
 const NAV_ITEMS = [
-  { label: 'Clientes',  href: '/admin',           icon: Users },
-  { label: 'Contenido', href: '/admin/contenido',  icon: LayoutGrid },
+  { label: 'Clientes',  href: '/admin/clientes',  icon: Users },
+  { label: 'Mensajes',  href: '/admin/mensajes',  icon: MessageSquare },
+  { label: 'Contenido', href: '/admin/contenido', icon: LayoutGrid },
 ]
+
+function isNavActive(href: string, pathname: string) {
+  if (href === '/admin/clientes') {
+    return pathname === '/admin/clientes' || pathname.startsWith('/admin/clientes/')
+  }
+  return pathname === href || pathname.startsWith(href + '/')
+}
 
 export default function AdminSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -34,10 +40,7 @@ export default function AdminSidebar() {
         <div className="text-xl mb-0.5" style={{ fontFamily: 'var(--font-dm-serif)', color: ACCENT }}>
           Vitrina<span>·</span>
         </div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: ACCENT, opacity: 0.7 }}
-        >
+        <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT, opacity: 0.7 }}>
           Admin
         </div>
       </div>
@@ -47,11 +50,8 @@ export default function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
-          // /admin: matches exactly or /admin/[clientId] (uuid routes), but NOT /admin/contenido
-          const isActive = item.href === '/admin'
-            ? (pathname === '/admin' || (pathname.startsWith('/admin/') && !pathname.startsWith('/admin/contenido')))
-            : (pathname === item.href || pathname.startsWith(item.href + '/'))
+          const Icon     = item.icon
+          const isActive = isNavActive(item.href, pathname)
 
           return (
             <Link
@@ -59,9 +59,9 @@ export default function AdminSidebar() {
               href={item.href}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
               style={{
-                color: isActive ? ACCENT : '#8A9BAD',
+                color:           isActive ? ACCENT : '#8A9BAD',
                 backgroundColor: isActive ? ACCENT_BG : 'transparent',
-                borderLeft: isActive ? `2px solid ${ACCENT_BORDER}` : '2px solid transparent',
+                borderLeft:      isActive ? `2px solid ${ACCENT}` : '2px solid transparent',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
@@ -85,7 +85,6 @@ export default function AdminSidebar() {
 
       {/* Bottom actions */}
       <div className="px-3 pb-6 space-y-1">
-        {/* Switch to client view */}
         <Link
           href="/dashboard"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
@@ -103,7 +102,6 @@ export default function AdminSidebar() {
           <span>Ver como cliente</span>
         </Link>
 
-        {/* Logout */}
         <button
           onClick={handleSignOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
