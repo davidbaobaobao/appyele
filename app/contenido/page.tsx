@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, Plus, Trash2, Save, Eye, EyeOff, GripVertical } from 'lucide-react'
+import { UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, Plus, Trash2, Save, Eye, EyeOff, GripVertical, X } from 'lucide-react'
+import ImageUploader from '@/components/ImageUploader'
 import TopBar from '@/components/TopBar'
 import Sidebar from '@/components/Sidebar'
 import CardManager, { FieldDef } from '@/components/CardManager'
@@ -103,17 +104,44 @@ function AdminShowcaseSection() {
                 </div>
               </div>
               <div>
-                <label style={SS.label}>Imagen principal (URL)</label>
-                <input style={SS.input} value={item.main_image} onChange={e => update(idx, { main_image: e.target.value })} placeholder="https://…" />
+                <ImageUploader
+                  label="Imagen principal"
+                  value={item.main_image}
+                  onChange={url => update(idx, { main_image: url })}
+                />
               </div>
               <div>
-                <label style={SS.label}>Imágenes adicionales (URLs separadas por coma)</label>
-                <input
-                  style={SS.input}
-                  value={item.additional_images.join(', ')}
-                  onChange={e => update(idx, { additional_images: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                  placeholder="https://…, https://…"
-                />
+                <label style={SS.label}>Imágenes adicionales</label>
+                <div className="space-y-2">
+                  {item.additional_images.map((imgUrl, imgIdx) => (
+                    <div key={imgIdx} className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <ImageUploader
+                          value={imgUrl}
+                          onChange={url => {
+                            const next = [...item.additional_images]
+                            next[imgIdx] = url
+                            update(idx, { additional_images: next })
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
+                        style={{ ...SS.btnDanger, padding: '6px', marginTop: '18px', flexShrink: 0 }}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    style={{ ...SS.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', padding: '4px 10px' }}
+                    onClick={() => update(idx, { additional_images: [...item.additional_images, ''] })}
+                  >
+                    <Plus size={12} /> Añadir imagen
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <div>
