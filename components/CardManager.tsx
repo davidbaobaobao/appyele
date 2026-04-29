@@ -335,27 +335,30 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
 
   const handleSave = async () => {
     setSaving(true)
+
+    // Coerce number fields — form inputs always return strings
+    const coercedData: RecordData = { ...formData }
+    fields.forEach((f) => {
+      if (f.type === 'number') {
+        const parsed = parseInt(String(coercedData[f.key]))
+        coercedData[f.key] = isNaN(parsed) ? (f.key === 'rating' ? 5 : 0) : parsed
+      }
+    })
+
     if (editingItem) {
       const { error } = await supabase
         .from(sectionKey)
-        .update(formData)
+        .update(coercedData)
         .eq('id', editingItem.id as string)
       if (!error) { showToast(`✓ Elemento actualizado. ${SAVED_NOTICE}`); fetchItems() }
     } else {
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('Inserting with client_id:', clientId)
-      console.log('Auth user id:            ', user?.id)
-      console.log('Are they different?      ', clientId !== user?.id)
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from(sectionKey)
-        .insert({ ...formData, client_id: clientId })
-        .select()
+        .insert({ ...coercedData, client_id: clientId })
       if (error) {
-        console.error('Full error:', JSON.stringify(error))
+        console.error('CardManager insert error:', JSON.stringify(error))
         alert('Error guardando: ' + error.message + ' — code: ' + error.code)
       } else {
-        console.log('Insert success:', data)
         showToast(`✓ Elemento añadido. ${SAVED_NOTICE}`)
         fetchItems()
       }
