@@ -45,12 +45,12 @@ type Tab = 'info' | 'secciones' | 'mensajes'
 // ── Style constants ────────────────────────────────────────────────────────────
 
 const S = {
-  card: { backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.4)', borderRadius: '12px', padding: '20px' },
-  label: { display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.07em', color: '#8A9BAD', marginBottom: '4px' },
-  input: { backgroundColor: '#0F1923', border: '1px solid rgba(45,63,82,0.6)', color: '#F5F2EE', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%' },
-  select: { backgroundColor: '#0F1923', border: '1px solid rgba(45,63,82,0.6)', color: '#F5F2EE', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', cursor: 'pointer' },
-  btnPrimary: { backgroundColor: '#E05A2B', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
-  tab: (active: boolean) => ({ padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', border: 'none', backgroundColor: active ? '#E05A2B' : 'transparent', color: active ? '#fff' : '#8A9BAD' }),
+  card: { backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' },
+  label: { display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.07em', color: '#86868B', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
+  input: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
+  select: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-instrument)' },
+  tab: (active: boolean) => ({ padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', border: 'none', backgroundColor: active ? '#1D1D1F' : 'transparent', color: active ? '#FFFFFF' : '#86868B', fontFamily: 'var(--font-instrument)' }),
 }
 
 const STATUS_OPTIONS = [
@@ -188,7 +188,7 @@ export default function ClienteDetailPage() {
   const [toast, setToast]   = useState<{ msg: string; ok: boolean } | null>(null)
 
   // messages state
-  const [messages, setMessages]   = useState<Message[]>([])
+  const [messages, setMessages]       = useState<Message[]>([])
   const [msgsLoading, setMsgsLoading] = useState(false)
 
   const showToast = useCallback((msg: string, ok = true) => {
@@ -251,8 +251,8 @@ export default function ClienteDetailPage() {
     return (
       <div className="flex-1 p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded-lg" style={{ backgroundColor: '#1E2B3A' }} />
-          <div className="h-64 rounded-xl" style={{ backgroundColor: '#1E2B3A' }} />
+          <div className="h-8 w-48 rounded-xl" style={{ backgroundColor: '#F5F5F7' }} />
+          <div className="h-64 rounded-2xl" style={{ backgroundColor: '#F5F5F7' }} />
         </div>
       </div>
     )
@@ -261,7 +261,7 @@ export default function ClienteDetailPage() {
   if (!client) {
     return (
       <div className="flex-1 p-6">
-        <p className="text-sm" style={{ color: '#C43A2A' }}>Cliente no encontrado.</p>
+        <p className="text-sm" style={{ color: '#991b1b' }}>Cliente no encontrado.</p>
       </div>
     )
   }
@@ -272,9 +272,9 @@ export default function ClienteDetailPage() {
       <button
         onClick={() => router.push('/admin/clientes')}
         className="flex items-center gap-2 text-sm transition-colors"
-        style={{ color: '#8A9BAD' }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = '#F5F2EE' }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = '#8A9BAD' }}
+        style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = '#1D1D1F' }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B' }}
       >
         <ArrowLeft size={15} /> Volver a clientes
       </button>
@@ -282,25 +282,36 @@ export default function ClienteDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl" style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}>
+          <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
             {client.business_name}
           </h1>
-          <p className="text-xs mt-0.5 font-mono" style={{ color: '#8A9BAD' }}>{client.id}</p>
+          <p className="text-xs mt-0.5 font-mono" style={{ color: '#86868B' }}>{client.id}</p>
         </div>
         {client.plan && (
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(224,90,43,0.12)', color: '#E05A2B' }}>
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ backgroundColor: '#F5F5F7', color: '#86868B', border: '1px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-instrument)' }}
+          >
             {PLAN_LABELS[client.plan] ?? client.plan}
           </span>
         )}
         {client.website_url && (
-          <a href={client.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs" style={{ color: '#E8A020' }}>
+          <a
+            href={client.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs transition-colors"
+            style={{ color: '#C8A97E', fontFamily: 'var(--font-instrument)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#92400e' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#C8A97E' }}
+          >
             <ExternalLink size={12} /> Ver web
           </a>
         )}
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#1E2B3A', width: 'fit-content' }}>
+      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#F5F5F7', width: 'fit-content' }}>
         {(['info', 'secciones', 'mensajes'] as Tab[]).map((t) => (
           <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>
             {t === 'info' ? 'Información' : t === 'secciones' ? 'Secciones' : 'Mensajes'}
@@ -311,7 +322,7 @@ export default function ClienteDetailPage() {
       {/* ── INFO TAB ── */}
       {tab === 'info' && (
         <div style={S.card} className="max-w-2xl space-y-5">
-          <h2 className="text-sm font-semibold" style={{ color: '#F5F2EE' }}>Datos del cliente</h2>
+          <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>Datos del cliente</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -352,10 +363,10 @@ export default function ClienteDetailPage() {
             </div>
           </div>
 
-          <div className="h-px" style={{ backgroundColor: 'rgba(45,63,82,0.4)' }} />
+          <div className="h-px" style={{ backgroundColor: 'rgba(0,0,0,0.06)' }} />
 
           <div className="flex items-center justify-between">
-            <p className="text-xs" style={{ color: '#8A9BAD' }}>Alta: {formatDate(client.created_at)}</p>
+            <p className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Alta: {formatDate(client.created_at)}</p>
             <button style={S.btnPrimary} onClick={handleSaveInfo} disabled={saving}>
               <Save size={13} />
               {saving ? 'Guardando…' : 'Guardar cambios'}
@@ -369,14 +380,14 @@ export default function ClienteDetailPage() {
         <div className="space-y-6">
           {(!client.dynamic_sections || client.dynamic_sections.length === 0) ? (
             <div style={{ ...S.card, textAlign: 'center' }} className="py-10">
-              <p className="text-sm" style={{ color: '#8A9BAD' }}>Este cliente no tiene secciones dinámicas configuradas.</p>
+              <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Este cliente no tiene secciones dinámicas configuradas.</p>
             </div>
           ) : (
             client.dynamic_sections.map((sectionKey) => {
               const cfg = SECTION_CONFIG[sectionKey]
               if (!cfg) return (
                 <div key={sectionKey} style={S.card}>
-                  <p className="text-xs font-mono" style={{ color: '#8A9BAD' }}>{sectionKey} — sin configuración</p>
+                  <p className="text-xs font-mono" style={{ color: '#86868B' }}>{sectionKey} — sin configuración</p>
                 </div>
               )
               return (
@@ -398,15 +409,15 @@ export default function ClienteDetailPage() {
       {/* ── MENSAJES TAB ── */}
       {tab === 'mensajes' && (
         <div style={S.card} className="space-y-4">
-          <h2 className="text-sm font-semibold" style={{ color: '#F5F2EE' }}>
+          <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>
             Mensajes recibidos
           </h2>
           {msgsLoading ? (
             <div className="space-y-2">
-              {[1,2,3].map((i) => <div key={i} className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: '#0F1923' }} />)}
+              {[1,2,3].map((i) => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: '#E5E5E7' }} />)}
             </div>
           ) : messages.length === 0 ? (
-            <p className="text-sm" style={{ color: '#8A9BAD' }}>Sin mensajes.</p>
+            <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Sin mensajes.</p>
           ) : (
             <div className="space-y-2">
               {messages.map((msg) => {
@@ -416,24 +427,30 @@ export default function ClienteDetailPage() {
                 return (
                   <div
                     key={msg.id}
-                    className="rounded-lg p-3 space-y-1"
-                    style={{ backgroundColor: '#0F1923', border: `1px solid ${msg.read ? 'rgba(45,63,82,0.3)' : 'rgba(224,90,43,0.3)'}` }}
+                    className="rounded-xl p-3 space-y-1"
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      border: `1px solid ${msg.read ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.12)'}`,
+                    }}
                   >
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
                         {!msg.read && (
-                          <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#E05A2B', color: '#fff' }}>
+                          <span
+                            className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                            style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
+                          >
                             Nuevo
                           </span>
                         )}
-                        <span className="text-sm font-medium" style={{ color: '#F5F2EE' }}>{senderName}</span>
+                        <span className="text-sm font-medium" style={{ color: '#1D1D1F', fontFamily: 'var(--font-instrument)' }}>{senderName}</span>
                         {senderEmail && (
-                          <span className="text-xs" style={{ color: '#8A9BAD' }}>{senderEmail}</span>
+                          <span className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>{senderEmail}</span>
                         )}
                       </div>
-                      <span className="text-xs font-mono" style={{ color: '#8A9BAD' }}>{formatDateTime(msg.created_at)}</span>
+                      <span className="text-xs font-mono" style={{ color: '#86868B' }}>{formatDateTime(msg.created_at)}</span>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{ color: '#8A9BAD' }}>{body}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>{body}</p>
                   </div>
                 )
               })}
@@ -445,11 +462,12 @@ export default function ClienteDetailPage() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-5 right-5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg z-50"
+          className="fixed bottom-5 right-5 px-4 py-3 rounded-xl text-sm font-medium z-50"
           style={{
-            backgroundColor: toast.ok ? 'rgba(42,138,90,0.15)' : 'rgba(196,58,42,0.15)',
-            border: `1px solid ${toast.ok ? 'rgba(42,138,90,0.4)' : 'rgba(196,58,42,0.4)'}`,
-            color: toast.ok ? '#2A8A5A' : '#C43A2A',
+            backgroundColor: toast.ok ? 'rgba(6,95,70,0.08)' : 'rgba(153,27,27,0.08)',
+            border: `1px solid ${toast.ok ? 'rgba(6,95,70,0.2)' : 'rgba(153,27,27,0.2)'}`,
+            color: toast.ok ? '#065f46' : '#991b1b',
+            fontFamily: 'var(--font-instrument)',
           }}
         >
           {toast.msg}

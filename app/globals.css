@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  /* Vitrina Studio brand colors */
-  --color-dark: #0F1923;
-  --color-ink: #1E2B3A;
-  --color-slate: #2D3F52;
-  --color-mist: #8A9BAD;
-  --color-amber: #E8A020;
+  /* Yele dashboard design system */
+  --color-bg:           #FFFFFF;
+  --color-bg-secondary: #F5F5F7;
+  --color-text:         #1D1D1F;
+  --color-mist:         #86868B;
+  --color-accent:       #C8A97E;
+  --color-border:       rgba(0, 0, 0, 0.08);
+
+  /* Legacy tokens (kept for compatibility) */
+  --color-dark:    #0F1923;
+  --color-ink:     #1E2B3A;
+  --color-slate:   #2D3F52;
+  --color-amber:   #E8A020;
   --color-amber-d: #B87A10;
-  --color-light: #F5F2EE;
+  --color-light:   #F5F2EE;
   --color-success: #2A8A5A;
-  --color-danger: #C43A2A;
+  --color-danger:  #C43A2A;
 
   /* Typography */
-  --font-serif: var(--font-dm-serif), serif;
-  --font-sans: var(--font-dm-sans), sans-serif;
-  --font-mono: var(--font-dm-mono), monospace;
+  --font-outfit:     var(--font-outfit), sans-serif;
+  --font-instrument: var(--font-instrument), sans-serif;
+  --font-serif:      var(--font-dm-serif), serif;
+  --font-sans:       var(--font-dm-sans), sans-serif;
+  --font-mono:       var(--font-dm-mono), monospace;
 }
 
 html,
@@ -24,9 +33,20 @@ body {
 }
 
 body {
-  background-color: #0F1923;
-  color: #F5F2EE;
-  font-family: var(--font-dm-sans), sans-serif;
+  background-color: #FFFFFF;
+  color: #1D1D1F;
+  font-family: var(--font-instrument), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive main content margin */
+.dashboard-main {
+  margin-left: 240px;
+}
+
+@media (max-width: 1023px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
 }

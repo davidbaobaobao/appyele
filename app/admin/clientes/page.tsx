@@ -19,21 +19,21 @@ interface Client {
 }
 
 const STATUS_CONFIG: Record<ClientStatus, { label: string; color: string; bg: string }> = {
-  intake_pending: { label: 'En revisión',     color: '#E8A020', bg: 'rgba(232,160,32,0.12)' },
-  building:       { label: 'En construcción', color: '#6BA8D4', bg: 'rgba(107,168,212,0.12)' },
-  live:           { label: 'Activo',           color: '#2A8A5A', bg: 'rgba(42,138,90,0.12)' },
-  paused:         { label: 'Pausado',          color: '#8A9BAD', bg: 'rgba(138,155,173,0.12)' },
-  cancelled:      { label: 'Cancelado',        color: '#C43A2A', bg: 'rgba(196,58,42,0.12)' },
+  intake_pending: { label: 'En revisión',     color: '#92400e', bg: 'rgba(180,120,40,0.1)'  },
+  building:       { label: 'En construcción', color: '#1e40af', bg: 'rgba(30,64,175,0.08)'  },
+  live:           { label: 'Activo',          color: '#065f46', bg: 'rgba(6,95,70,0.08)'    },
+  paused:         { label: 'Pausado',         color: '#86868B', bg: 'rgba(0,0,0,0.06)'      },
+  cancelled:      { label: 'Cancelado',       color: '#991b1b', bg: 'rgba(153,27,27,0.08)'  },
 }
 
 const PLAN_LABELS: Record<string, string> = {
   basica: 'Básica', profesional: 'Profesional', avanzada: 'Avanzada',
 }
 
-const PLAN_COLORS: Record<string, { color: string; bg: string }> = {
-  basica:       { color: '#8A9BAD', bg: 'rgba(138,155,173,0.12)' },
-  profesional:  { color: '#E8A020', bg: 'rgba(232,160,32,0.12)' },
-  avanzada:     { color: '#E05A2B', bg: 'rgba(224,90,43,0.12)' },
+const PLAN_BADGE: Record<string, { color: string; bg: string }> = {
+  basica:      { color: '#86868B', bg: '#F5F5F7' },
+  profesional: { color: '#FFFFFF', bg: '#1D1D1F' },
+  avanzada:    { color: '#C8A97E', bg: 'rgba(200,169,126,0.15)' },
 }
 
 function formatDate(dateStr: string) {
@@ -41,14 +41,15 @@ function formatDate(dateStr: string) {
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
 }
 
-const inputStyle = {
-  backgroundColor: '#1E2B3A',
-  border: '1px solid rgba(45,63,82,0.6)',
-  color: '#F5F2EE',
-  borderRadius: '8px',
+const inputStyle: React.CSSProperties = {
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(0,0,0,0.08)',
+  color: '#1D1D1F',
+  borderRadius: '10px',
   padding: '8px 12px',
   fontSize: '13px',
   outline: 'none',
+  fontFamily: 'var(--font-instrument)',
 }
 
 export default function ClientesPage() {
@@ -88,11 +89,11 @@ export default function ClientesPage() {
     <div className="flex-1 p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}>
+        <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
           Clientes
         </h1>
         {!loading && (
-          <p className="text-sm mt-1" style={{ color: '#8A9BAD' }}>
+          <p className="text-sm mt-1" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
             {filtered.length} de {clients.length} clientes
           </p>
         )}
@@ -101,7 +102,7 @@ export default function ClientesPage() {
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#8A9BAD' }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#86868B' }} />
           <input
             type="text"
             value={search}
@@ -110,21 +111,13 @@ export default function ClientesPage() {
             style={{ ...inputStyle, paddingLeft: '32px', width: '260px' }}
           />
         </div>
-        <select
-          value={planFilter}
-          onChange={(e) => setPlanFilter(e.target.value)}
-          style={{ ...inputStyle, cursor: 'pointer' }}
-        >
+        <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
           <option value="all">Todos los planes</option>
           <option value="basica">Básica</option>
           <option value="profesional">Profesional</option>
           <option value="avanzada">Avanzada</option>
         </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ ...inputStyle, cursor: 'pointer' }}
-        >
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
           <option value="all">Todos los estados</option>
           <option value="intake_pending">En revisión</option>
           <option value="building">En construcción</option>
@@ -135,23 +128,30 @@ export default function ClientesPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.4)' }}>
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' }}
+      >
         {loading ? (
           <div className="space-y-px">
             {[1,2,3,4,5].map((i) => (
-              <div key={i} className="h-14 animate-pulse" style={{ backgroundColor: i%2===0 ? '#1a2736' : '#1E2B3A' }} />
+              <div key={i} className="h-14 animate-pulse" style={{ backgroundColor: i % 2 === 0 ? '#FAFAFA' : '#FFFFFF' }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
-            <p className="text-sm" style={{ color: '#8A9BAD' }}>No se encontraron clientes</p>
+            <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>No se encontraron clientes</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(45,63,82,0.4)' }}>
+              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                 {['Negocio', 'Ciudad', 'Sector', 'Plan', 'Estado', 'Web', 'Msgs', 'Alta', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#8A9BAD' }}>
+                  <th
+                    key={h}
+                    className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+                  >
                     {h}
                   </th>
                 ))}
@@ -159,39 +159,47 @@ export default function ClientesPage() {
             </thead>
             <tbody>
               {filtered.map((client) => {
-                const sc  = STATUS_CONFIG[client.status] ?? STATUS_CONFIG.intake_pending
-                const pc  = PLAN_COLORS[client.plan]
+                const sc = STATUS_CONFIG[client.status] ?? STATUS_CONFIG.intake_pending
+                const pb = PLAN_BADGE[client.plan]
                 return (
                   <tr
                     key={client.id}
                     onClick={() => goTo(client.id)}
                     className="transition-colors cursor-pointer"
-                    style={{ borderBottom: '1px solid rgba(45,63,82,0.2)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)' }}
+                    style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
-                    <td className="px-4 py-3 font-medium" style={{ color: '#F5F2EE' }}>
+                    <td className="px-4 py-4 font-medium" style={{ fontFamily: 'var(--font-instrument)', color: '#1D1D1F' }}>
                       {client.business_name ?? '—'}
                     </td>
-                    <td className="px-4 py-3" style={{ color: '#8A9BAD' }}>{client.city ?? '—'}</td>
-                    <td className="px-4 py-3 max-w-[140px]" style={{ color: '#8A9BAD' }}>
+                    <td className="px-4 py-4" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+                      {client.city ?? '—'}
+                    </td>
+                    <td className="px-4 py-4 max-w-[140px]" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
                       {client.industry_type
-                        ? client.industry_type.length > 18 ? client.industry_type.slice(0,18)+'…' : client.industry_type
+                        ? client.industry_type.length > 18 ? client.industry_type.slice(0, 18) + '…' : client.industry_type
                         : '—'}
                     </td>
-                    <td className="px-4 py-3">
-                      {client.plan && pc ? (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: pc.bg, color: pc.color }}>
+                    <td className="px-4 py-4">
+                      {client.plan && pb ? (
+                        <span
+                          className="text-xs font-medium px-2.5 py-1 rounded-full"
+                          style={{ backgroundColor: pb.bg, color: pb.color, fontFamily: 'var(--font-instrument)' }}
+                        >
                           {PLAN_LABELS[client.plan] ?? client.plan}
                         </span>
                       ) : '—'}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                    <td className="px-4 py-4">
+                      <span
+                        className="text-xs font-medium px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: sc.bg, color: sc.color, fontFamily: 'var(--font-instrument)' }}
+                      >
                         {sc.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       {client.website_url ? (
                         <a
                           href={client.website_url}
@@ -199,31 +207,39 @@ export default function ClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           className="flex items-center gap-1 text-xs transition-colors"
-                          style={{ color: '#E8A020' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#B87A10' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = '#E8A020' }}
+                          style={{ fontFamily: 'var(--font-instrument)', color: '#C8A97E' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#92400e' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#C8A97E' }}
                         >
                           <ExternalLink size={11} /> Ver web
                         </a>
-                      ) : <span style={{ color: '#8A9BAD' }}>—</span>}
+                      ) : <span style={{ color: '#86868B' }}>—</span>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       {(client.unread_count ?? 0) > 0 ? (
-                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full inline-block" style={{ backgroundColor: '#C43A2A', color: '#fff' }}>
+                        <span
+                          className="text-xs font-semibold px-1.5 py-0.5 rounded-full inline-block"
+                          style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
+                        >
                           {client.unread_count}
                         </span>
-                      ) : <span style={{ color: '#8A9BAD' }}>—</span>}
+                      ) : <span style={{ color: '#86868B' }}>—</span>}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs" style={{ color: '#8A9BAD' }}>
+                    <td className="px-4 py-4 font-mono text-xs" style={{ color: '#86868B' }}>
                       {formatDate(client.created_at)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <button
                         onClick={(e) => { e.stopPropagation(); goTo(client.id) }}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#F5F2EE', border: '1px solid rgba(255,255,255,0.1)' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)' }}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: '#86868B',
+                          border: '1px solid rgba(0,0,0,0.08)',
+                          fontFamily: 'var(--font-instrument)',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#86868B' }}
                       >
                         Ver
                       </button>

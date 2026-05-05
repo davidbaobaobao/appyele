@@ -5,9 +5,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Users, MessageSquare, LayoutGrid, LogOut, LayoutDashboard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-const ACCENT    = '#E05A2B'
-const ACCENT_BG = 'rgba(224,90,43,0.08)'
-
 const NAV_ITEMS = [
   { label: 'Clientes',  href: '/admin/clientes',  icon: Users },
   { label: 'Mensajes',  href: '/admin/mensajes',  icon: MessageSquare },
@@ -33,22 +30,28 @@ export default function AdminSidebar() {
   return (
     <aside
       className="fixed left-0 top-0 h-full flex flex-col z-40"
-      style={{ width: '220px', backgroundColor: '#1E2B3A', borderRight: '1px solid rgba(45,63,82,0.4)' }}
+      style={{ width: '240px', backgroundColor: '#F5F5F7', borderRight: '1px solid rgba(0,0,0,0.08)' }}
     >
       {/* Logo */}
       <div className="px-5 pt-6 pb-4">
-        <div className="text-xl mb-0.5" style={{ fontFamily: 'var(--font-dm-serif)', color: ACCENT }}>
-          Vitrina<span>·</span>
+        <div
+          className="text-xl font-semibold mb-0.5"
+          style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
+        >
+          Yele
         </div>
-        <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT, opacity: 0.7 }}>
+        <div
+          className="text-xs font-semibold uppercase tracking-widest"
+          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+        >
           Admin
         </div>
       </div>
 
-      <div style={{ height: '1px', backgroundColor: 'rgba(45,63,82,0.4)', margin: '0 20px' }} />
+      <div style={{ height: '1px', backgroundColor: 'rgba(0,0,0,0.08)', margin: '0 20px' }} />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon     = item.icon
           const isActive = isNavActive(item.href, pathname)
@@ -57,21 +60,22 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
               style={{
-                color:           isActive ? ACCENT : '#8A9BAD',
-                backgroundColor: isActive ? ACCENT_BG : 'transparent',
-                borderLeft:      isActive ? `2px solid ${ACCENT}` : '2px solid transparent',
+                fontFamily: 'var(--font-instrument)',
+                fontWeight: isActive ? 500 : 400,
+                color: isActive ? '#1D1D1F' : '#86868B',
+                backgroundColor: isActive ? '#FFFFFF' : 'transparent',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.color = '#F5F2EE'
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
+                  e.currentTarget.style.color = '#1D1D1F'
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.color = '#8A9BAD'
+                  e.currentTarget.style.color = '#86868B'
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }
               }}
@@ -84,17 +88,20 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Bottom actions */}
-      <div className="px-3 pb-6 space-y-1">
+      <div
+        className="px-3 pb-6 space-y-0.5"
+        style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px' }}
+      >
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
-          style={{ color: '#8A9BAD' }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
+          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#F5F2EE'
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
+            e.currentTarget.style.color = '#1D1D1F'
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#8A9BAD'
+            e.currentTarget.style.color = '#86868B'
             e.currentTarget.style.backgroundColor = 'transparent'
           }}
         >
@@ -104,14 +111,14 @@ export default function AdminSidebar() {
 
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors"
-          style={{ color: '#8A9BAD' }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
+          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#F5F2EE'
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
+            e.currentTarget.style.color = '#1D1D1F'
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#8A9BAD'
+            e.currentTarget.style.color = '#86868B'
             e.currentTarget.style.backgroundColor = 'transparent'
           }}
         >

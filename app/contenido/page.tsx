@@ -11,13 +11,13 @@ import { revalidateYeleSite } from '@/lib/revalidate'
 
 // ── Admin-only Showcase Section ───────────────────────────────────────────────
 
-const SS = {
-  card: { backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.4)', borderRadius: '12px', padding: '16px' },
-  input: { backgroundColor: '#152030', border: '1px solid rgba(45,63,82,0.6)', color: '#F5F2EE', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%' },
-  label: { color: '#8A9BAD', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px' },
-  btnPrimary: { backgroundColor: '#E05A2B', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
-  btnGhost: { backgroundColor: 'rgba(255,255,255,0.06)', color: '#F5F2EE', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
-  btnDanger: { backgroundColor: 'rgba(196,58,42,0.15)', color: '#C43A2A', border: '1px solid rgba(196,58,42,0.3)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' },
+const S = {
+  card:       { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '16px' },
+  input:      { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
+  label:      { color: '#86868B', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
+  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '10px', padding: '6px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+  btnGhost:   { backgroundColor: 'transparent', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', padding: '6px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+  btnDanger:  { backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '10px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
 }
 
 interface ShowcaseProject {
@@ -59,45 +59,30 @@ function AdminShowcaseSection() {
     try {
       let sortOrder = item.sort_order
       if (!item.id) {
-        const { data: maxData } = await supabase
-          .from('showcase_projects')
-          .select('sort_order')
-          .order('sort_order', { ascending: false })
-          .limit(1)
+        const { data: maxData } = await supabase.from('showcase_projects').select('sort_order').order('sort_order', { ascending: false }).limit(1)
         sortOrder = (maxData?.[0]?.sort_order ?? 0) + 1
       }
-
       const payload = {
-        name: item.name,
-        description: item.description || '',
-        main_image: item.main_image,
+        name: item.name, description: item.description || '', main_image: item.main_image,
         additional_images: Array.isArray(item.additional_images) ? item.additional_images.filter(Boolean) : [],
-        visible: item.visible,
-        sort_order: sortOrder,
+        visible: item.visible, sort_order: sortOrder,
       }
-
       let saved: ShowcaseProject
       if (item.id) {
-        const { data, error } = await supabase
-          .from('showcase_projects').update(payload).eq('id', item.id).select().single()
+        const { data, error } = await supabase.from('showcase_projects').update(payload).eq('id', item.id).select().single()
         if (error) throw error
         saved = data
       } else {
-        const { data, error } = await supabase
-          .from('showcase_projects').insert(payload).select().single()
+        const { data, error } = await supabase.from('showcase_projects').insert(payload).select().single()
         if (error) throw error
         saved = data
       }
-
       setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...saved } : it))
       await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error guardando showcase:', err)
       alert('Error guardando: ' + msg)
-    } finally {
-      setSaving(null)
-    }
+    } finally { setSaving(null) }
   }
 
   async function remove(idx: number) {
@@ -108,86 +93,65 @@ function AdminShowcaseSection() {
     setItems(prev => prev.filter((_, i) => i !== idx))
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A9BAD' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
 
   return (
     <div className="space-y-4">
       {items.map((item, idx) => (
-        <div key={item.id ?? idx} style={SS.card}>
+        <div key={item.id ?? idx} style={S.card}>
           <div className="flex items-start gap-3">
-            <GripVertical size={16} style={{ color: '#8A9BAD', marginTop: '2px', flexShrink: 0 }} />
+            <GripVertical size={16} style={{ color: '#86868B', marginTop: '2px', flexShrink: 0 }} />
             <div className="flex-1 grid grid-cols-1 gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label style={SS.label}>Nombre</label>
-                  <input style={SS.input} value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="El Taller · Cerámica, Gràcia" />
+                  <label style={S.label}>Nombre</label>
+                  <input style={S.input} value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="El Taller · Cerámica, Gràcia" />
                 </div>
                 <div>
-                  <label style={SS.label}>Descripción</label>
-                  <input style={SS.input} value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Breve descripción" />
+                  <label style={S.label}>Descripción</label>
+                  <input style={S.input} value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Breve descripción" />
                 </div>
               </div>
+              <ImageUploader label="Imagen principal" value={item.main_image} onChange={url => update(idx, { main_image: url })} />
               <div>
-                <ImageUploader
-                  label="Imagen principal"
-                  value={item.main_image}
-                  onChange={url => update(idx, { main_image: url })}
-                />
-              </div>
-              <div>
-                <label style={SS.label}>Imágenes adicionales</label>
+                <label style={S.label}>Imágenes adicionales</label>
                 <div className="space-y-2">
                   {item.additional_images.map((imgUrl, imgIdx) => (
                     <div key={imgIdx} className="flex items-start gap-2">
                       <div className="flex-1">
-                        <ImageUploader
-                          value={imgUrl}
-                          onChange={url => {
-                            const next = [...item.additional_images]
-                            next[imgIdx] = url
-                            update(idx, { additional_images: next })
-                          }}
-                        />
+                        <ImageUploader value={imgUrl} onChange={url => {
+                          const next = [...item.additional_images]; next[imgIdx] = url
+                          update(idx, { additional_images: next })
+                        }} />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
-                        style={{ ...SS.btnDanger, padding: '6px', marginTop: '18px', flexShrink: 0 }}
-                      >
+                      <button type="button" onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
+                        style={{ ...S.btnDanger, padding: '6px', marginTop: '18px', flexShrink: 0 }}>
                         <X size={13} />
                       </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    style={{ ...SS.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', padding: '4px 10px' }}
-                    onClick={() => update(idx, { additional_images: [...item.additional_images, ''] })}
-                  >
+                  <button type="button" style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', padding: '4px 10px' }}
+                    onClick={() => update(idx, { additional_images: [...item.additional_images, ''] })}>
                     <Plus size={12} /> Añadir imagen
                   </button>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button style={SS.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+                <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
                   {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
                   {item.visible ? 'Visible' : 'Oculto'}
                 </button>
-                <button style={SS.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+                <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
                   <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
                   {saving === String(idx) ? 'Guardando…' : 'Guardar'}
                 </button>
-                <button style={SS.btnDanger} onClick={() => remove(idx)}>
-                  <Trash2 size={13} />
-                </button>
+                <button style={S.btnDanger} onClick={() => remove(idx)}><Trash2 size={13} /></button>
               </div>
             </div>
           </div>
         </div>
       ))}
-      <button
-        style={{ ...SS.btnGhost, display: 'flex', alignItems: 'center', gap: '6px' }}
-        onClick={() => setItems(prev => [...prev, newItem()])}
-      >
+      <button style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setItems(prev => [...prev, newItem()])}>
         <Plus size={14} /> Añadir proyecto
       </button>
     </div>
@@ -196,11 +160,10 @@ function AdminShowcaseSection() {
 
 const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fields: FieldDef[] }> = {
   catalog_items: {
-    title: 'Carta / Catálogo',
-    icon: <UtensilsCrossed size={14} />,
+    title: 'Carta / Catálogo', icon: <UtensilsCrossed size={14} />,
     fields: [
       { key: 'name',        label: 'Nombre',      type: 'text',     required: true, placeholder: 'Ej. Paella valenciana' },
-      { key: 'category',   label: 'Categoría',   type: 'text',     placeholder: 'Ej. Arroces' },
+      { key: 'category',    label: 'Categoría',   type: 'text',     placeholder: 'Ej. Arroces' },
       { key: 'description', label: 'Descripción', type: 'textarea', placeholder: 'Describe el producto…' },
       { key: 'price',       label: 'Precio',      type: 'text',     placeholder: 'Ej. 14,50 €' },
       { key: 'image_url',   label: 'Imagen',      type: 'image' },
@@ -208,8 +171,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     ],
   },
   services: {
-    title: 'Servicios',
-    icon: <Briefcase size={14} />,
+    title: 'Servicios', icon: <Briefcase size={14} />,
     fields: [
       { key: 'name',        label: 'Nombre del servicio', type: 'text',     required: true },
       { key: 'description', label: 'Descripción',         type: 'textarea' },
@@ -218,45 +180,40 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     ],
   },
   team_members: {
-    title: 'Equipo',
-    icon: <Users size={14} />,
+    title: 'Equipo', icon: <Users size={14} />,
     fields: [
-      { key: 'name',      label: 'Nombre',    type: 'text', required: true },
-      { key: 'role',      label: 'Cargo',     type: 'text' },
-      { key: 'photo_url', label: 'Foto',  type: 'image' },
+      { key: 'name',      label: 'Nombre', type: 'text', required: true },
+      { key: 'role',      label: 'Cargo',  type: 'text' },
+      { key: 'photo_url', label: 'Foto',   type: 'image' },
     ],
   },
   testimonials: {
-    title: 'Testimonios',
-    icon: <Quote size={14} />,
+    title: 'Testimonios', icon: <Quote size={14} />,
     fields: [
       { key: 'author_name', label: 'Nombre del autor', type: 'text',     required: true },
       { key: 'role',        label: 'Cargo del autor',  type: 'text' },
-      { key: 'body',        label: 'Testimonio',        type: 'textarea', required: true },
+      { key: 'body',        label: 'Testimonio',       type: 'textarea', required: true },
       { key: 'rating',      label: 'Valoración (1–5)', type: 'number',   placeholder: '5' },
     ],
   },
   faqs: {
-    title: 'Preguntas frecuentes',
-    icon: <HelpCircle size={14} />,
+    title: 'Preguntas frecuentes', icon: <HelpCircle size={14} />,
     fields: [
       { key: 'question', label: 'Pregunta',  type: 'text',     required: true },
       { key: 'answer',   label: 'Respuesta', type: 'textarea', required: true },
     ],
   },
   offers: {
-    title: 'Ofertas',
-    icon: <Tag size={14} />,
+    title: 'Ofertas', icon: <Tag size={14} />,
     fields: [
-      { key: 'title',       label: 'Título',            type: 'text',     required: true },
-      { key: 'badge',       label: 'Etiqueta (badge)',  type: 'text',     placeholder: 'Ej. -20%' },
-      { key: 'description', label: 'Descripción',       type: 'textarea' },
-      { key: 'valid_until', label: 'Válido hasta',      type: 'date' },
+      { key: 'title',       label: 'Título',           type: 'text',     required: true },
+      { key: 'badge',       label: 'Etiqueta (badge)', type: 'text',     placeholder: 'Ej. -20%' },
+      { key: 'description', label: 'Descripción',      type: 'textarea' },
+      { key: 'valid_until', label: 'Válido hasta',     type: 'date' },
     ],
   },
   listings: {
-    title: 'Inmuebles',
-    icon: <Home size={14} />,
+    title: 'Inmuebles', icon: <Home size={14} />,
     fields: [
       { key: 'title',    label: 'Título',          type: 'text',   required: true },
       { key: 'type',     label: 'Tipo',            type: 'select', options: ['Venta', 'Alquiler'] },
@@ -267,12 +224,11 @@ const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fie
     ],
   },
   gallery: {
-    title: 'Galería',
-    icon: <Image size={14} />,
+    title: 'Galería', icon: <Image size={14} />,
     fields: [
-      { key: 'image_url', label: 'Imagen', type: 'image' },
-      { key: 'caption',   label: 'Descripción',   type: 'text' },
-      { key: 'category',  label: 'Categoría',     type: 'text' },
+      { key: 'image_url', label: 'Imagen',      type: 'image' },
+      { key: 'caption',   label: 'Descripción', type: 'text' },
+      { key: 'category',  label: 'Categoría',   type: 'text' },
     ],
   },
 }
@@ -289,18 +245,12 @@ export default function ContenidoPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-        setIsAdmin(true)
-      }
+      if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) setIsAdmin(true)
 
       const { data: client, error } = await supabase
-        .from('clients')
-        .select('id, slug, dynamic_sections')
-        .eq('user_id', user.id)
-        .single()
+        .from('clients').select('id, slug, dynamic_sections').eq('user_id', user.id).single()
 
       if (error) console.error('contenido fetch error:', error)
-
       if (client) {
         setClientId(client.id)
         setClientSlug(client.slug ?? '')
@@ -312,17 +262,17 @@ export default function ContenidoPage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#0F1923' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
       <Sidebar />
-      <main className="flex-1 flex flex-col" style={{ marginLeft: '220px' }}>
+      <main className="flex-1 flex flex-col dashboard-main">
         <TopBar title="Contenido" />
 
         <div className="flex-1 p-6 max-w-5xl space-y-8">
           <div>
-            <h2 className="text-2xl mb-1" style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}>
+            <h2 className="text-3xl font-semibold mb-2" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
               Contenido
             </h2>
-            <p className="text-sm" style={{ color: '#8A9BAD' }}>
+            <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
               Gestiona el contenido dinámico de tu web
             </p>
           </div>
@@ -330,22 +280,22 @@ export default function ContenidoPage() {
           {loading ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2].map((i) => (
-                <div key={i} className="rounded-xl h-40" style={{ backgroundColor: '#1E2B3A' }} />
+                <div key={i} className="rounded-2xl h-40" style={{ backgroundColor: '#F5F5F7' }} />
               ))}
             </div>
           ) : (
             <div className="space-y-6">
               {isAdmin && (
                 <div
-                  className="rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(224,90,43,0.3)', backgroundColor: '#1A2536' }}
+                  className="rounded-2xl overflow-hidden"
+                  style={{ border: '1px solid rgba(200,169,126,0.25)', backgroundColor: '#FFFDF9' }}
                 >
                   <div
                     className="flex items-center gap-2 px-4 py-3"
-                    style={{ backgroundColor: 'rgba(224,90,43,0.1)', borderBottom: '1px solid rgba(224,90,43,0.2)' }}
+                    style={{ backgroundColor: 'rgba(200,169,126,0.08)', borderBottom: '1px solid rgba(200,169,126,0.2)' }}
                   >
-                    <Image size={14} style={{ color: '#E05A2B' }} />
-                    <span className="text-sm font-semibold" style={{ color: '#E05A2B' }}>
+                    <Image size={14} style={{ color: '#C8A97E' }} />
+                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#92400e' }}>
                       Proyectos de ejemplo (Ejemplos)
                     </span>
                   </div>
@@ -357,13 +307,13 @@ export default function ContenidoPage() {
 
               {!clientId ? null : dynamicSections.length === 0 && !isAdmin ? (
                 <div
-                  className="rounded-xl p-8 text-center"
-                  style={{ backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.4)' }}
+                  className="rounded-2xl p-8 text-center"
+                  style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}
                 >
-                  <p className="text-sm mb-1" style={{ color: '#F5F2EE' }}>
+                  <p className="text-sm mb-1" style={{ fontFamily: 'var(--font-instrument)', color: '#1D1D1F' }}>
                     No tienes secciones dinámicas configuradas.
                   </p>
-                  <p className="text-sm" style={{ color: '#8A9BAD' }}>
+                  <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
                     Escríbenos si quieres añadir esta funcionalidad.
                   </p>
                 </div>

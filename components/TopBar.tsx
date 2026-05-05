@@ -16,7 +16,6 @@ export default function TopBar({ title }: TopBarProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Try to get name from user metadata (Google auth)
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name
       if (fullName) {
         const parts = fullName.trim().split(' ')
@@ -25,7 +24,6 @@ export default function TopBar({ title }: TopBarProps) {
         return
       }
 
-      // Fallback: get business name from clients table
       const { data: client } = await supabase
         .from('clients')
         .select('business_name')
@@ -48,16 +46,18 @@ export default function TopBar({ title }: TopBarProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-6 h-14 flex-shrink-0"
+      className="flex items-center justify-between px-6 h-16 flex-shrink-0"
       style={{
-        borderBottom: '1px solid rgba(45,63,82,0.3)',
-        backgroundColor: '#0F1923',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
       }}
     >
       {/* Page title */}
       <h1
-        className="text-base font-semibold"
-        style={{ color: '#F5F2EE' }}
+        className="text-base font-semibold pl-10 lg:pl-0"
+        style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
       >
         {title}
       </h1>
@@ -65,13 +65,18 @@ export default function TopBar({ title }: TopBarProps) {
       {/* User greeting + avatar */}
       <div className="flex items-center gap-3">
         {firstName && (
-          <span className="text-sm" style={{ color: '#8A9BAD' }}>
-            Hola, <span style={{ color: '#F5F2EE' }}>{firstName}</span>
+          <span className="text-sm hidden sm:block" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+            Hola, <span style={{ color: '#1D1D1F' }}>{firstName}</span>
           </span>
         )}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-          style={{ backgroundColor: 'rgba(232,160,32,0.15)', color: '#E8A020', border: '1px solid rgba(232,160,32,0.3)' }}
+          style={{
+            backgroundColor: 'rgba(200,169,126,0.15)',
+            color: '#C8A97E',
+            border: '1px solid rgba(200,169,126,0.3)',
+            fontFamily: 'var(--font-outfit)',
+          }}
         >
           {initials}
         </div>

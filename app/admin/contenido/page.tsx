@@ -39,17 +39,18 @@ interface FAQItem {
 // ── Style constants ───────────────────────────────────────────────────────────
 
 const S = {
-  card: { backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.4)', borderRadius: '12px', padding: '16px' },
-  input: { backgroundColor: '#152030', border: '1px solid rgba(45,63,82,0.6)', color: '#F5F2EE', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%' },
-  label: { color: '#8A9BAD', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px' },
-  btnPrimary: { backgroundColor: '#E05A2B', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
-  btnGhost: { backgroundColor: 'rgba(255,255,255,0.06)', color: '#F5F2EE', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
-  btnDanger: { backgroundColor: 'rgba(196,58,42,0.15)', color: '#C43A2A', border: '1px solid rgba(196,58,42,0.3)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' },
+  card: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '16px' },
+  input: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
+  label: { color: '#86868B', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
+  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+  btnGhost: { backgroundColor: 'transparent', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+  btnDanger: { backgroundColor: 'rgba(153,27,27,0.06)', color: '#991b1b', border: '1px solid rgba(153,27,27,0.15)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' },
   tab: (active: boolean) => ({
     padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
     borderRadius: '8px', border: 'none',
-    backgroundColor: active ? '#E05A2B' : 'transparent',
-    color: active ? '#fff' : '#8A9BAD',
+    backgroundColor: active ? '#1D1D1F' : 'transparent',
+    color: active ? '#FFFFFF' : '#86868B',
+    fontFamily: 'var(--font-instrument)',
   }),
 }
 
@@ -208,7 +209,7 @@ function ShowcaseSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A9BAD' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -360,7 +361,7 @@ function TestimonialsSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A9BAD' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -506,7 +507,7 @@ function FAQsSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A9BAD' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -545,15 +546,15 @@ export default function ContenidoPage() {
   return (
     <div className="flex-1 p-6 space-y-6">
       <div>
-        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}>
+        <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
           Contenido
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#8A9BAD' }}>
+        <p className="text-sm mt-1" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
           Gestiona proyectos, testimonios y FAQ del sitio público
         </p>
       </div>
 
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#1E2B3A', width: 'fit-content' }}>
+      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#F5F5F7', width: 'fit-content' }}>
         {(['ejemplos', 'testimonios', 'faqs'] as Tab[]).map(t => (
           <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}

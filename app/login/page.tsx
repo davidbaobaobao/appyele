@@ -51,39 +51,62 @@ export default function LoginPage() {
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: '#FFFFFF',
+    border: '1px solid rgba(0,0,0,0.08)',
+    color: '#1D1D1F',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    fontSize: '14px',
+    width: '100%',
+    outline: 'none',
+    fontFamily: 'var(--font-instrument)',
+    transition: 'all 0.15s',
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#0F1923' }}>
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: '#F5F5F7' }}
+    >
       <div
-        className="w-full max-w-sm rounded-2xl p-8"
-        style={{ backgroundColor: '#1E2B3A', border: '1px solid rgba(45,63,82,0.6)' }}
+        className="w-full max-w-sm rounded-3xl p-10"
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)' }}
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <span
-            className="text-3xl"
-            style={{ fontFamily: 'var(--font-dm-serif)', color: '#E8A020' }}
+          <div
+            className="text-3xl font-bold mb-1"
+            style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
           >
-            Vitrina
-            <span style={{ color: '#E8A020' }}>·</span>
-          </span>
+            Yele
+          </div>
         </div>
 
         {!emailSent ? (
           <>
             <h1
-              className="text-2xl font-semibold text-center mb-2"
-              style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}
+              className="text-xl font-semibold text-center mb-1"
+              style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
             >
               Accede a tu panel
             </h1>
-            <p className="text-center text-sm mb-8" style={{ color: '#8A9BAD' }}>
+            <p
+              className="text-center text-sm mb-8"
+              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+            >
               Gestiona tu web desde aquí
             </p>
 
             {error && (
               <div
-                className="rounded-lg px-4 py-3 mb-4 text-sm"
-                style={{ backgroundColor: 'rgba(196,58,42,0.15)', color: '#C43A2A', border: '1px solid rgba(196,58,42,0.3)' }}
+                className="rounded-xl px-4 py-3 mb-4 text-sm"
+                style={{
+                  backgroundColor: 'rgba(153,27,27,0.06)',
+                  color: '#991b1b',
+                  border: '1px solid rgba(153,27,27,0.15)',
+                  fontFamily: 'var(--font-instrument)',
+                }}
               >
                 {error}
               </div>
@@ -93,10 +116,16 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 rounded-lg py-3 px-4 font-semibold text-sm transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#E8A020', color: '#0F1923' }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#B87A10' }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#E8A020' }}
+              className="w-full flex items-center justify-center gap-3 rounded-xl py-3 px-4 text-sm transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.08)',
+                color: '#1D1D1F',
+                fontFamily: 'var(--font-instrument)',
+                fontWeight: 500,
+              }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#F5F5F7' }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#FFFFFF' }}
             >
               <GoogleIcon />
               Continuar con Google
@@ -104,23 +133,25 @@ export default function LoginPage() {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.6)' }} />
-              <span className="text-xs" style={{ color: '#8A9BAD' }}>o</span>
-              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.6)' }} />
+              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
+              <span className="text-xs" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>o</span>
+              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
             </div>
 
             {/* Email button / form */}
             {!showEmailForm ? (
               <button
                 onClick={() => setShowEmailForm(true)}
-                className="w-full flex items-center justify-center gap-2 rounded-lg py-3 px-4 font-medium text-sm transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm transition-colors"
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.7)',
+                  backgroundColor: 'transparent',
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  color: '#1D1D1F',
+                  fontFamily: 'var(--font-instrument)',
+                  fontWeight: 500,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
               >
                 Acceder con email
               </button>
@@ -132,22 +163,28 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  className="w-full rounded-lg py-3 px-4 text-sm outline-none transition-colors"
-                  style={{
-                    backgroundColor: '#0F1923',
-                    border: '1px solid rgba(45,63,82,0.6)',
-                    color: '#F5F2EE',
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)'
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(232,160,32,0.6)' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(45,63,82,0.6)' }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
                 />
                 <button
                   type="submit"
                   disabled={loading || !email}
-                  className="w-full rounded-lg py-3 px-4 font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#E8A020', color: '#0F1923' }}
-                  onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#B87A10' }}
-                  onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#E8A020' }}
+                  className="w-full rounded-xl py-3 px-4 text-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: '#1D1D1F',
+                    color: '#FFFFFF',
+                    fontFamily: 'var(--font-instrument)',
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = '0.9' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                 >
                   {loading ? 'Enviando...' : 'Enviar enlace de acceso'}
                 </button>
@@ -155,25 +192,27 @@ export default function LoginPage() {
             )}
           </>
         ) : (
-          /* Email sent confirmation */
           <div className="text-center py-4">
             <div className="text-4xl mb-4">📬</div>
             <h2
               className="text-xl font-semibold mb-2"
-              style={{ fontFamily: 'var(--font-dm-serif)', color: '#F5F2EE' }}
+              style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
             >
-              Revisa tu bandeja de entrada
+              Revisa tu bandeja
             </h2>
-            <p className="text-sm mb-6" style={{ color: '#8A9BAD' }}>
+            <p
+              className="text-sm mb-6"
+              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+            >
               Hemos enviado un enlace de acceso a{' '}
-              <span style={{ color: '#F5F2EE' }}>{email}</span>
+              <span style={{ color: '#1D1D1F' }}>{email}</span>
             </p>
             <button
               onClick={() => { setEmailSent(false); setShowEmailForm(false); setEmail('') }}
               className="text-sm transition-colors"
-              style={{ color: '#8A9BAD' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#F5F2EE' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#8A9BAD' }}
+              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#1D1D1F' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B' }}
             >
               ← Volver
             </button>

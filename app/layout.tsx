@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, DM_Sans, DM_Mono } from "next/font/google";
+import { DM_Serif_Display, DM_Sans, DM_Mono, Outfit, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
 
@@ -21,9 +21,21 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
 });
 
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
 export const metadata: Metadata = {
-  title: "Vitrina Studio — Panel de cliente",
-  description: "Gestiona tu presencia web con Vitrina Studio",
+  title: "Yele — Panel de cliente",
+  description: "Gestiona tu presencia web con Yele",
 };
 
 export default function RootLayout({
@@ -34,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${dmSerifDisplay.variable} ${dmSans.variable} ${dmMono.variable} h-full`}
+      className={`${dmSerifDisplay.variable} ${dmSans.variable} ${dmMono.variable} ${outfit.variable} ${instrumentSans.variable} h-full`}
     >
       <body className="min-h-full">
         <ToastProvider>{children}</ToastProvider>

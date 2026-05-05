@@ -39,68 +39,38 @@ function groupByDate(messages: Message[]) {
 }
 
 export default function MensajesPage() {
-  const [clientId, setClientId]   = useState<string | null>(null)
-  const [messages, setMessages]   = useState<Message[]>([])
-  const [loading, setLoading]     = useState(true)
+  const [clientId, setClientId]       = useState<string | null>(null)
+  const [messages, setMessages]       = useState<Message[]>([])
+  const [loading, setLoading]         = useState(true)
   const [clientError, setClientError] = useState(false)
-  const [input, setInput]       = useState('')
-  const [sending, setSending]   = useState(false)
-  const bottomRef    = useRef<HTMLDivElement>(null)
-  const textareaRef  = useRef<HTMLTextAreaElement>(null)
+  const [input, setInput]             = useState('')
+  const [sending, setSending]         = useState(false)
+  const bottomRef   = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const fetchMessages = useCallback(async (cid: string) => {
-    console.log('[mensajes] fetchMessages called with client_id:', cid)
     const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('client_id', cid)
-      .order('created_at', { ascending: true })
-    console.log('[mensajes] messages result:', { count: data?.length, error })
+      .from('messages').select('*').eq('client_id', cid).order('created_at', { ascending: true })
     if (error) console.error('[mensajes] messages fetch error:', error)
     setMessages(data ?? [])
   }, [])
 
   const markStudioRead = useCallback(async (cid: string) => {
-    console.log('[mensajes] marking studio messages read for client_id:', cid)
-    const { error } = await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('client_id', cid)
-      .eq('author_role', 'studio')
-      .eq('read', false)
-    if (error) console.error('[mensajes] markStudioRead error:', error)
+    await supabase.from('messages').update({ read: true })
+      .eq('client_id', cid).eq('author_role', 'studio').eq('read', false)
   }, [])
 
   useEffect(() => {
     async function init() {
-      console.log('[mensajes] init: getting auth user…')
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      console.log('[mensajes] auth user:', { id: user?.id, email: user?.email, error: userError })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
 
-      if (!user) {
-        console.warn('[mensajes] no auth user found — not logged in?')
-        setLoading(false)
-        return
-      }
+      const { data: client, error: clientErr } = await supabase
+        .from('clients').select('id, business_name').eq('user_id', user.id).single()
 
-      console.log('[mensajes] fetching client row for user_id:', user.id)
-      const { data: client, error: clientError } = await supabase
-        .from('clients')
-        .select('id, business_name')
-        .eq('user_id', user.id)
-        .single()
-
-      console.log('[mensajes] client row result:', { client, error: clientError })
-
-      if (clientError) {
-        console.error('[mensajes] client fetch error (no row found for this user?):', clientError)
-        setClientError(true)
-        setLoading(false)
-        return
-      }
+      if (clientErr) { setClientError(true); setLoading(false); return }
 
       if (client) {
-        console.log('[mensajes] client.id (used as client_id for messages):', client.id)
         setClientId(client.id)
         await fetchMessages(client.id)
         await markStudioRead(client.id)
@@ -110,12 +80,8 @@ export default function MensajesPage() {
     init()
   }, [fetchMessages, markStudioRead])
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  // Poll every 15s
   useEffect(() => {
     if (!clientId) return
     const interval = setInterval(() => fetchMessages(clientId), 15000)
@@ -127,29 +93,18 @@ export default function MensajesPage() {
     setSending(true)
     const body = input.trim()
     setInput('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    const payload = { client_id: clientId, author_role: 'client', body, read: false }
-    console.log('[mensajes] inserting message:', payload)
+    const { error } = await supabase
+      .from('messages').insert({ client_id: clientId, author_role: 'client', body, read: false }).select()
 
-    const { data, error } = await supabase
-      .from('messages')
-      .insert(payload)
-      .select()
-
-    console.log('[mensajes] insert result:', { data, error })
     if (error) console.error('[mensajes] send error:', error)
     else await fetchMessages(clientId)
     setSending(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -161,25 +116,24 @@ export default function MensajesPage() {
   const groups = groupByDate(messages)
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#0F1923' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
       <Sidebar />
-      <main className="flex-1 flex flex-col" style={{ marginLeft: '220px', height: '100vh' }}>
+      <main className="flex-1 flex flex-col dashboard-main" style={{ height: '100vh' }}>
         <TopBar title="Mensajes" />
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {clientError ? (
             <div className="py-20 text-center">
-              <p className="text-sm" style={{ color: '#C43A2A' }}>
+              <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#991b1b' }}>
                 No se encontró tu perfil de cliente.
-                Comprueba la consola del navegador para más detalles.
               </p>
             </div>
           ) : loading ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                  <div className="h-10 rounded-2xl" style={{ width: `${140 + i * 40}px`, backgroundColor: '#1E2B3A' }} />
+                  <div className="h-10 rounded-2xl" style={{ width: `${140 + i * 40}px`, backgroundColor: '#F5F5F7' }} />
                 </div>
               ))}
             </div>
@@ -187,7 +141,9 @@ export default function MensajesPage() {
             <div className="flex-1 flex items-center justify-center py-20">
               <div className="text-center">
                 <div className="text-3xl mb-3">💬</div>
-                <p className="text-sm" style={{ color: '#8A9BAD' }}>Aún no hay mensajes. ¡Envía el primero!</p>
+                <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+                  Aún no hay mensajes. ¡Envía el primero!
+                </p>
               </div>
             </div>
           ) : (
@@ -195,9 +151,11 @@ export default function MensajesPage() {
               <div key={group.date} className="space-y-3">
                 {/* Date separator */}
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.4)' }} />
-                  <span className="text-xs" style={{ color: '#8A9BAD' }}>{formatDate(group.date)}</span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.4)' }} />
+                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
+                  <span className="text-xs" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+                    {formatDate(group.date)}
+                  </span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
                 </div>
 
                 {group.messages.map((msg) => {
@@ -208,16 +166,17 @@ export default function MensajesPage() {
                         <div
                           className="px-4 py-2.5 text-sm leading-relaxed"
                           style={{
-                            backgroundColor: isClient ? '#E8A020' : '#2D3F52',
-                            color: isClient ? '#0F1923' : '#F5F2EE',
+                            backgroundColor: isClient ? '#1D1D1F' : '#F5F5F7',
+                            color: isClient ? '#FFFFFF' : '#1D1D1F',
                             borderRadius: isClient ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                            fontFamily: 'var(--font-instrument)',
                           }}
                         >
                           {msg.body}
                         </div>
                         <div
                           className={`text-xs mt-1 ${isClient ? 'text-right' : 'text-left'}`}
-                          style={{ color: '#8A9BAD' }}
+                          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
                         >
                           {formatTime(msg.created_at)}
                         </div>
@@ -234,7 +193,7 @@ export default function MensajesPage() {
         {/* Input area */}
         <div
           className="px-6 py-4 flex-shrink-0"
-          style={{ borderTop: '1px solid rgba(45,63,82,0.3)', backgroundColor: '#0F1923' }}
+          style={{ borderTop: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#FFFFFF' }}
         >
           <div className="flex items-end gap-3 max-w-3xl mx-auto">
             <textarea
@@ -244,25 +203,32 @@ export default function MensajesPage() {
               onKeyDown={handleKeyDown}
               placeholder="Escribe un mensaje… (Enter para enviar)"
               rows={1}
-              className="flex-1 resize-none rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+              className="flex-1 resize-none rounded-xl px-4 py-3 text-sm outline-none transition-all"
               style={{
-                backgroundColor: '#1E2B3A',
-                border: '1px solid rgba(45,63,82,0.6)',
-                color: '#F5F2EE',
+                backgroundColor: '#F5F5F7',
+                border: '1px solid rgba(0,0,0,0.08)',
+                color: '#1D1D1F',
                 maxHeight: '100px',
+                fontFamily: 'var(--font-instrument)',
               }}
-              onFocus={(e)  => { e.currentTarget.style.borderColor = 'rgba(232,160,32,0.6)' }}
-              onBlur={(e)   => { e.currentTarget.style.borderColor = 'rgba(45,63,82,0.6)' }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || sending}
-              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#E8A020' }}
-              onMouseEnter={(e) => { if (input.trim()) e.currentTarget.style.backgroundColor = '#B87A10' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#E8A020' }}
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: '#1D1D1F' }}
+              onMouseEnter={(e) => { if (input.trim()) e.currentTarget.style.opacity = '0.9' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
             >
-              <Send size={16} style={{ color: '#0F1923' }} />
+              <Send size={16} style={{ color: '#FFFFFF' }} />
             </button>
           </div>
         </div>
