@@ -36,7 +36,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await adminClient
     .from('messages')
-    .select('*, clients(name, website_url)')
+    .select('*, clients(business_name, website_url)')
     .order('created_at', { ascending: false })
 
   if (error) {

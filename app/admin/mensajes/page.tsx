@@ -14,7 +14,7 @@ interface Message {
   read: boolean
   created_at: string
   clients?: {
-    name: string
+    business_name: string
     website_url?: string
   }
 }
@@ -147,7 +147,7 @@ export default function MensajesPage() {
             const senderEmail = msg.email ?? ''
             const body        = msg.body ?? msg.message ?? ''
             const isExpanded  = expanded.has(msg.id)
-            const clientName  = msg.clients?.name ?? '—'
+            const clientName  = msg.clients?.business_name ?? '—'
 
             return (
               <div

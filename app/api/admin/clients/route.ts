@@ -33,7 +33,7 @@ export async function GET() {
 
   const { data: clients, error: clientsError } = await adminClient
     .from('clients')
-    .select('id, business_name, city, industry_type, plan, status, created_at')
+    .select('id, business_name, city, industry_type, plan, status, created_at, website_url')
     .order('created_at', { ascending: false })
 
   if (clientsError) {

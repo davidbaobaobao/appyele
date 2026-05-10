@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Building2, Layers, BarChart2, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { label: 'Inicio',         href: '/dashboard',      icon: LayoutDashboard },
   { label: 'Mi negocio',     href: '/negocio',        icon: Building2 },
   { label: 'Contenido',      href: '/contenido',      icon: Layers },
-  { label: 'Estadísticas',   href: '/estadisticas',   icon: BarChart2 },
   { label: 'Mensajes',       href: '/mensajes',       icon: MessageSquare },
   { label: 'Mi cuenta',      href: '/cuenta',         icon: Settings },
 ]
