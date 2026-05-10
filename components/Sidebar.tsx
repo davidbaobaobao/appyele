@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import SupportButton from '@/components/SupportButton'
 
 const NAV_ITEMS = [
   { label: 'Inicio',         href: '/dashboard',      icon: LayoutDashboard },
@@ -111,6 +112,8 @@ export default function Sidebar() {
 
   return (
     <>
+      <SupportButton />
+
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
