@@ -5,6 +5,9 @@ import { createClient } from '@supabase/supabase-js'
 import { isAdmin } from '@/lib/is-admin'
 
 export async function GET() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   // 1. Verify the caller is an admin via session cookie
   const cookieStore = await cookies()
   const supabase = createServerClient(

@@ -27,6 +27,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ clientId: string }> }
 ) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const { clientId } = await params
   const cookieStore = await cookies()
   const { user, adminClient } = await getAdminClient(cookieStore)
@@ -53,6 +56,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ clientId: string }> }
 ) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const { clientId } = await params
   const cookieStore = await cookies()
   const { user, adminClient } = await getAdminClient(cookieStore)

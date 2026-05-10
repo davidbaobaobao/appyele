@@ -26,6 +26,9 @@ async function authorize(cookieStore: Awaited<ReturnType<typeof cookies>>) {
 
 // GET /api/admin/messages?clientId=xxx
 export async function GET(req: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const clientId = req.nextUrl.searchParams.get('clientId')
   if (!clientId) return NextResponse.json({ error: 'Missing clientId' }, { status: 400 })
 
@@ -52,6 +55,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/messages — send a studio message
 export async function POST(req: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const cookieStore = await cookies()
   const { user, adminClient } = await authorize(cookieStore)
 
@@ -84,6 +90,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/admin/messages — mark client messages read
 export async function PATCH(req: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const cookieStore = await cookies()
   const { user, adminClient } = await authorize(cookieStore)
 

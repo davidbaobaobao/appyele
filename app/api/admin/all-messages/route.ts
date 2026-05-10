@@ -29,6 +29,9 @@ async function authorize() {
 
 // GET /api/admin/all-messages — all messages across all clients, joined with client name
 export async function GET(_req: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const { user, adminClient } = await authorize()
   if (!user || !isAdmin(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,6 +52,9 @@ export async function GET(_req: NextRequest) {
 
 // PATCH /api/admin/all-messages — mark a single message as read by id
 export async function PATCH(req: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
   const { user, adminClient } = await authorize()
   if (!user || !isAdmin(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

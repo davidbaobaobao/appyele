@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Mail, MailOpen, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { Mail, MailOpen, ExternalLink, ChevronDown, ChevronUp, Send } from 'lucide-react'
 
 interface Message {
   id: string
@@ -50,6 +50,8 @@ export default function MensajesPage() {
   const [loading, setLoading]           = useState(true)
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [expanded, setExpanded]         = useState<Set<string>>(new Set())
+  const [replyTexts, setReplyTexts]     = useState<Record<string, string>>({})
+  const [replySending, setReplySending] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetch('/api/admin/all-messages')
@@ -79,6 +81,21 @@ export default function MensajesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+  }
+
+  async function handleReply(clientId: string) {
+    const text = (replyTexts[clientId] ?? '').trim()
+    if (!text || replySending.has(clientId)) return
+    setReplySending((prev) => new Set(prev).add(clientId))
+    const res = await fetch('/api/admin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, body: text }),
+    })
+    setReplySending((prev) => { const next = new Set(prev); next.delete(clientId); return next })
+    if (res.ok) {
+      setReplyTexts((prev) => ({ ...prev, [clientId]: '' }))
+    }
   }
 
   function toggleExpand(id: string) {
@@ -212,11 +229,41 @@ export default function MensajesPage() {
                 {/* Expanded actions */}
                 {isExpanded && (
                   <div
-                    className="px-4 pb-4 flex items-center gap-3 flex-wrap"
+                    className="px-4 pb-4 space-y-3"
                     style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="pt-3 flex items-center gap-3 flex-wrap w-full">
+                    {/* Reply form */}
+                    <div className="pt-3 flex items-end gap-2">
+                      <textarea
+                        value={replyTexts[msg.client_id] ?? ''}
+                        onChange={(e) => setReplyTexts((prev) => ({ ...prev, [msg.client_id]: e.target.value }))}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(msg.client_id) } }}
+                        placeholder="Responder al cliente… (Enter para enviar)"
+                        rows={2}
+                        style={{ ...inputStyle, resize: 'none', flex: 1, cursor: 'text' }}
+                      />
+                      <button
+                        onClick={() => handleReply(msg.client_id)}
+                        disabled={!(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        style={{
+                          backgroundColor: '#1D1D1F',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontFamily: 'var(--font-instrument)',
+                          opacity: !(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id) ? 0.45 : 1,
+                          cursor: !(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id) ? 'default' : 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Send size={11} />
+                        {replySending.has(msg.client_id) ? 'Enviando…' : 'Enviar'}
+                      </button>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-3 flex-wrap">
                       {senderEmail && (
                         <a
                           href={`mailto:${senderEmail}?subject=Re: Mensaje desde ${clientName}`}
@@ -230,7 +277,7 @@ export default function MensajesPage() {
                           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
                           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                         >
-                          <Mail size={12} /> Responder
+                          <Mail size={12} /> Correo
                         </a>
                       )}
                       {msg.clients?.website_url && (
@@ -248,7 +295,7 @@ export default function MensajesPage() {
                           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F' }}
                           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#86868B' }}
                         >
-                          <ExternalLink size={12} /> Ver web del cliente
+                          <ExternalLink size={12} /> Ver web
                         </a>
                       )}
                       {!msg.read && (

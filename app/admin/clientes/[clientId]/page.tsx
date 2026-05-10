@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, Save, UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, CalendarDays } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, Send, UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, CalendarDays } from 'lucide-react'
 import CardManager, { FieldDef } from '@/components/CardManager'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -190,6 +190,8 @@ export default function ClienteDetailPage() {
   // messages state
   const [messages, setMessages]       = useState<Message[]>([])
   const [msgsLoading, setMsgsLoading] = useState(false)
+  const [replyInput, setReplyInput]   = useState('')
+  const [replySending, setReplySending] = useState(false)
 
   const showToast = useCallback((msg: string, ok = true) => {
     setToast({ msg, ok })
@@ -225,6 +227,27 @@ export default function ClienteDetailPage() {
       .then((data) => { setMessages(data); setMsgsLoading(false) })
       .catch(() => setMsgsLoading(false))
   }, [tab, clientId])
+
+  async function handleSendReply() {
+    const text = replyInput.trim()
+    if (!text || replySending) return
+    setReplySending(true)
+    const res = await fetch('/api/admin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, body: text }),
+    })
+    setReplySending(false)
+    if (res.ok) {
+      setReplyInput('')
+      const updated = await fetch(`/api/admin/messages?clientId=${clientId}`)
+      const data = await updated.json()
+      setMessages(data)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      showToast('Error al enviar: ' + (err.error ?? 'desconocido'), false)
+    }
+  }
 
   async function handleSaveInfo() {
     setSaving(true)
@@ -408,54 +431,79 @@ export default function ClienteDetailPage() {
 
       {/* ── MENSAJES TAB ── */}
       {tab === 'mensajes' && (
-        <div style={S.card} className="space-y-4">
-          <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>
-            Mensajes recibidos
-          </h2>
-          {msgsLoading ? (
-            <div className="space-y-2">
-              {[1,2,3].map((i) => <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: '#E5E5E7' }} />)}
-            </div>
-          ) : messages.length === 0 ? (
-            <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Sin mensajes.</p>
-          ) : (
-            <div className="space-y-2">
-              {messages.map((msg) => {
-                const senderName  = msg.name ?? (msg.author_role === 'studio' ? 'Yele Studio' : msg.author_role ?? '—')
-                const senderEmail = msg.email ?? ''
-                const body        = msg.body ?? msg.message ?? ''
+        <div
+          className="max-w-2xl flex flex-col"
+          style={{ ...S.card, padding: 0, overflow: 'hidden', height: '520px' }}
+        >
+          {/* Chat messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: 0 }}>
+            {msgsLoading ? (
+              <div className="space-y-2">
+                {[1,2,3].map((i) => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: '#F5F5F7' }} />)}
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Sin mensajes aún.</p>
+              </div>
+            ) : (
+              messages.map((msg) => {
+                const isStudio = msg.author_role === 'studio'
+                const senderName = msg.name ?? (isStudio ? 'Yele Studio' : '—')
+                const body = msg.body ?? msg.message ?? ''
                 return (
-                  <div
-                    key={msg.id}
-                    className="rounded-xl p-3 space-y-1"
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      border: `1px solid ${msg.read ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.12)'}`,
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        {!msg.read && (
-                          <span
-                            className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-                          >
-                            Nuevo
-                          </span>
-                        )}
-                        <span className="text-sm font-medium" style={{ color: '#1D1D1F', fontFamily: 'var(--font-instrument)' }}>{senderName}</span>
-                        {senderEmail && (
-                          <span className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>{senderEmail}</span>
-                        )}
-                      </div>
-                      <span className="text-xs font-mono" style={{ color: '#86868B' }}>{formatDateTime(msg.created_at)}</span>
+                  <div key={msg.id} className={`flex ${isStudio ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className="max-w-xs space-y-1"
+                      style={{
+                        backgroundColor: isStudio ? '#1D1D1F' : '#F5F5F7',
+                        color: isStudio ? '#FFFFFF' : '#1D1D1F',
+                        borderRadius: isStudio ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        padding: '10px 14px',
+                        fontSize: '13px',
+                        fontFamily: 'var(--font-instrument)',
+                      }}
+                    >
+                      {!isStudio && (
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: '#86868B', marginBottom: '2px' }}>
+                          {senderName}
+                        </p>
+                      )}
+                      <p style={{ lineHeight: '1.5' }}>{body}</p>
+                      <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '4px' }}>{formatDateTime(msg.created_at)}</p>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>{body}</p>
                   </div>
                 )
-              })}
-            </div>
-          )}
+              })
+            )}
+          </div>
+
+          {/* Reply form */}
+          <div
+            className="flex items-end gap-2 p-3"
+            style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            <textarea
+              value={replyInput}
+              onChange={(e) => setReplyInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply() } }}
+              placeholder="Escribe un mensaje… (Enter para enviar)"
+              rows={2}
+              style={{ ...S.input, resize: 'none', flex: 1 }}
+            />
+            <button
+              onClick={handleSendReply}
+              disabled={!replyInput.trim() || replySending}
+              style={{
+                ...S.btnPrimary,
+                opacity: (!replyInput.trim() || replySending) ? 0.45 : 1,
+                paddingLeft: '14px',
+                paddingRight: '14px',
+              }}
+            >
+              <Send size={13} />
+              {replySending ? 'Enviando…' : 'Enviar'}
+            </button>
+          </div>
         </div>
       )}
 
