@@ -65,7 +65,7 @@ export default function MensajesPage() {
   const clientOptions = useMemo(() => {
     const seen = new Map<string, string>()
     messages.forEach((m) => {
-      if (m.client_id && m.clients?.name) seen.set(m.client_id, m.clients.name)
+      if (m.client_id && m.clients?.business_name) seen.set(m.client_id, m.clients.business_name)
     })
     return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]))
   }, [messages])
