@@ -45,6 +45,7 @@ export default function MensajesPage() {
   const [clientError, setClientError] = useState(false)
   const [input, setInput]             = useState('')
   const [sending, setSending]         = useState(false)
+  const [sendError, setSendError]     = useState(false)
   const bottomRef   = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -91,15 +92,28 @@ export default function MensajesPage() {
   const handleSend = async () => {
     if (!input.trim() || !clientId || sending) return
     setSending(true)
+    setSendError(false)
     const body = input.trim()
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    const { error } = await supabase
-      .from('messages').insert({ client_id: clientId, author_role: 'client', body, read: false }).select()
-
-    if (error) console.error('[mensajes] send error:', error)
-    else await fetchMessages(clientId)
+    try {
+      const res = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      })
+      if (!res.ok) throw new Error('send failed')
+      await fetchMessages(clientId)
+    } catch {
+      setSendError(true)
+      // Restore the unsent message so user can try again
+      setInput(body)
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+        textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 100) + 'px'
+      }
+    }
     setSending(false)
   }
 
@@ -189,6 +203,27 @@ export default function MensajesPage() {
           )}
           <div ref={bottomRef} />
         </div>
+
+        {/* Send error banner */}
+        {sendError && (
+          <div
+            className="mx-6 mb-2 px-4 py-3 rounded-xl text-sm flex items-start gap-2"
+            style={{ backgroundColor: '#FEF2F2', border: '1px solid rgba(239,68,68,0.2)', fontFamily: 'var(--font-instrument)' }}
+          >
+            <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
+            <span style={{ color: '#7F1D1D' }}>
+              El chat no está disponible en este momento. Por favor contáctanos por{' '}
+              <a href="https://wa.me/8615021336924" style={{ color: '#DC2626', textDecoration: 'underline' }}>WhatsApp</a>
+              {' '}o{' '}
+              <a href="mailto:info@yele.design" style={{ color: '#DC2626', textDecoration: 'underline' }}>info@yele.design</a>.
+            </span>
+            <button
+              onClick={() => setSendError(false)}
+              style={{ marginLeft: 'auto', flexShrink: 0, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}
+              aria-label="Cerrar"
+            >×</button>
+          </div>
+        )}
 
         {/* Input area */}
         <div

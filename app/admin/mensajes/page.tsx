@@ -1,327 +1,491 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { Mail, MailOpen, ExternalLink, ChevronDown, ChevronUp, Send } from 'lucide-react'
+import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Send, MessageSquare } from 'lucide-react'
 
 interface Message {
   id: string
   client_id: string
-  author_role?: string
-  name?: string
-  email?: string
-  body?: string
-  message?: string
+  author_role: 'client' | 'studio'
+  body: string
   read: boolean
   created_at: string
   clients?: {
     business_name: string
     website_url?: string
+    email?: string
   }
 }
 
-function formatDateTime(d: string) {
+interface Conversation {
+  clientId: string
+  clientName: string
+  lastBody: string
+  lastAuthorRole: string
+  lastAt: string
+  unreadCount: number
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatTime(d: string) {
+  return new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function formatConvTime(d: string) {
   const date = new Date(d)
-  const now   = new Date()
-  const diff  = now.getTime() - date.getTime()
-  if (diff < 24 * 60 * 60 * 1000) {
-    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ' hoy'
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  if (diff < 24 * 60 * 60 * 1000) return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  if (diff < 7 * 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString('es-ES', { weekday: 'short' })
   }
-  return date.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
 }
 
-function isNew(d: string) {
-  return Date.now() - new Date(d).getTime() < 24 * 60 * 60 * 1000
+function groupByDate(messages: Message[]) {
+  const groups: { date: string; messages: Message[] }[] = []
+  let currentDate = ''
+  for (const msg of messages) {
+    const d = new Date(msg.created_at).toDateString()
+    if (d !== currentDate) {
+      currentDate = d
+      groups.push({ date: msg.created_at, messages: [msg] })
+    } else {
+      groups[groups.length - 1].messages.push(msg)
+    }
+  }
+  return groups
 }
 
-const inputStyle = {
-  backgroundColor: '#FFFFFF',
-  border: '1px solid rgba(0,0,0,0.08)',
-  color: '#1D1D1F',
-  borderRadius: '10px',
-  padding: '8px 12px',
-  fontSize: '13px',
-  outline: 'none',
-  cursor: 'pointer' as const,
-  fontFamily: 'var(--font-instrument)',
+function buildConversations(messages: Message[]): Conversation[] {
+  // messages come ordered descending — first occurrence per client is the latest
+  const map = new Map<string, Conversation>()
+  for (const msg of messages) {
+    const existing = map.get(msg.client_id)
+    if (!existing) {
+      map.set(msg.client_id, {
+        clientId: msg.client_id,
+        clientName: msg.clients?.business_name ?? '—',
+        lastBody: msg.body,
+        lastAuthorRole: msg.author_role,
+        lastAt: msg.created_at,
+        unreadCount: msg.author_role === 'client' && !msg.read ? 1 : 0,
+      })
+    } else {
+      if (msg.author_role === 'client' && !msg.read) existing.unreadCount++
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime())
 }
 
-export default function MensajesPage() {
-  const [messages, setMessages]         = useState<Message[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [clientFilter, setClientFilter] = useState<string>('all')
-  const [expanded, setExpanded]         = useState<Set<string>>(new Set())
-  const [replyTexts, setReplyTexts]     = useState<Record<string, string>>({})
-  const [replySending, setReplySending] = useState<Set<string>>(new Set())
+function initials(name: string) {
+  return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+}
 
-  useEffect(() => {
-    fetch('/api/admin/all-messages')
-      .then((r) => r.json())
-      .then((data) => { setMessages(data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
+// ─── Thread panel ─────────────────────────────────────────────────────────────
 
-  const unreadCount = useMemo(() => messages.filter((m) => !m.read).length, [messages])
+function ThreadPanel({ clientId, clientName, onUnreadChange }: {
+  clientId: string
+  clientName: string
+  onUnreadChange: (clientId: string, count: number) => void
+}) {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [input, setInput]       = useState('')
+  const [sending, setSending]   = useState(false)
+  const bottomRef   = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const clientOptions = useMemo(() => {
-    const seen = new Map<string, string>()
-    messages.forEach((m) => {
-      if (m.client_id && m.clients?.business_name) seen.set(m.client_id, m.clients.business_name)
-    })
-    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]))
-  }, [messages])
+  const fetchMessages = useCallback(async () => {
+    const res = await fetch(`/api/admin/messages?clientId=${clientId}`)
+    if (!res.ok) return
+    const data: Message[] = await res.json()
+    setMessages(data)
+    setLoading(false)
+  }, [clientId])
 
-  const filtered = useMemo(() => {
-    return messages.filter((m) => clientFilter === 'all' || m.client_id === clientFilter)
-  }, [messages, clientFilter])
-
-  async function markRead(id: string) {
-    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, read: true } : m))
-    await fetch('/api/admin/all-messages', {
+  const markRead = useCallback(async () => {
+    await fetch('/api/admin/messages', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ clientId }),
     })
-  }
+    onUnreadChange(clientId, 0)
+  }, [clientId, onUnreadChange])
 
-  async function handleReply(clientId: string) {
-    const text = (replyTexts[clientId] ?? '').trim()
-    if (!text || replySending.has(clientId)) return
-    setReplySending((prev) => new Set(prev).add(clientId))
+  useEffect(() => {
+    setMessages([])
+    setLoading(true)
+    fetchMessages()
+    markRead()
+  }, [clientId, fetchMessages, markRead])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  useEffect(() => {
+    const interval = setInterval(fetchMessages, 15000)
+    return () => clearInterval(interval)
+  }, [fetchMessages])
+
+  const handleSend = async () => {
+    if (!input.trim() || sending) return
+    setSending(true)
+    const body = input.trim()
+    setInput('')
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+
     const res = await fetch('/api/admin/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, body: text }),
+      body: JSON.stringify({ clientId, body }),
     })
-    setReplySending((prev) => { const next = new Set(prev); next.delete(clientId); return next })
-    if (res.ok) {
-      setReplyTexts((prev) => ({ ...prev, [clientId]: '' }))
-    }
+    if (res.ok) await fetchMessages()
+    setSending(false)
   }
 
-  function toggleExpand(id: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+    e.target.style.height = 'auto'
+    e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'
+  }
+
+  const groups = groupByDate(messages)
 
   return (
-    <div className="flex-1 p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1
-            className="text-3xl font-semibold flex items-center gap-3"
-            style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
-          >
-            Mensajes
-            {unreadCount > 0 && (
-              <span
-                className="text-sm font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-              >
-                {unreadCount} sin leer
-              </span>
-            )}
-          </h1>
-          {!loading && (
-            <p className="text-sm mt-1" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
-              {filtered.length} mensaje{filtered.length !== 1 ? 's' : ''}
-            </p>
-          )}
-        </div>
-        <select
-          value={clientFilter}
-          onChange={(e) => setClientFilter(e.target.value)}
-          style={inputStyle}
+    <div className="flex flex-col" style={{ height: '100%' }}>
+      {/* Thread header */}
+      <div
+        className="flex items-center gap-3 px-5 py-4 flex-shrink-0"
+        style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', backgroundColor: '#FFFFFF' }}
+      >
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+          style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF' }}
         >
-          <option value="all">Todos los clientes</option>
-          {clientOptions.map(([id, name]) => (
-            <option key={id} value={id}>{name}</option>
-          ))}
-        </select>
+          {initials(clientName)}
+        </div>
+        <div>
+          <p className="text-sm font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
+            {clientName}
+          </p>
+          <p className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+            {loading ? 'Cargando…' : `${messages.length} mensajes`}
+          </p>
+        </div>
       </div>
 
       {/* Messages */}
-      {loading ? (
-        <div className="space-y-2">
-          {[1,2,3,4,5].map((i) => (
-            <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ backgroundColor: '#F5F5F7' }} />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div
-          className="py-16 text-center rounded-2xl"
-          style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}
-        >
-          <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>No hay mensajes.</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((msg) => {
-            const senderName  = msg.name ?? (msg.author_role ?? '—')
-            const senderEmail = msg.email ?? ''
-            const body        = msg.body ?? msg.message ?? ''
-            const isExpanded  = expanded.has(msg.id)
-            const clientName  = msg.clients?.business_name ?? '—'
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5" style={{ backgroundColor: '#FAFAFA' }}>
+        {loading ? (
+          <div className="space-y-3 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                <div className="h-10 rounded-2xl" style={{ width: `${130 + i * 35}px`, backgroundColor: '#F0F0F0' }} />
+              </div>
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+              Sin mensajes todavía
+            </p>
+          </div>
+        ) : (
+          groups.map((group) => (
+            <div key={group.date} className="space-y-2">
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.07)' }} />
+                <span className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                  {formatDate(group.date)}
+                </span>
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.07)' }} />
+              </div>
 
-            return (
-              <div
-                key={msg.id}
-                className="rounded-2xl overflow-hidden"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: `1px solid ${msg.read ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.12)'}`,
-                }}
-              >
-                {/* Summary row */}
-                <div
-                  className="flex items-start gap-3 p-4 cursor-pointer"
-                  onClick={() => toggleExpand(msg.id)}
-                >
-                  <div className="mt-0.5 flex-shrink-0">
-                    {msg.read
-                      ? <MailOpen size={16} style={{ color: '#86868B' }} />
-                      : <Mail     size={16} style={{ color: '#1D1D1F' }} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {/* Client badge */}
-                      <span
-                        className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: '#F5F5F7', color: '#86868B', fontFamily: 'var(--font-instrument)' }}
-                      >
-                        {clientName}
-                      </span>
-                      {isNew(msg.created_at) && !msg.read && (
-                        <span
-                          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-                        >
-                          Nuevo
-                        </span>
-                      )}
-                      <span className="text-sm font-medium" style={{ color: '#1D1D1F', fontFamily: 'var(--font-instrument)' }}>{senderName}</span>
-                      {senderEmail && (
-                        <span className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>{senderEmail}</span>
-                      )}
-                    </div>
-                    <p
-                      className="text-sm mt-1"
-                      style={{
-                        color: '#86868B',
-                        fontFamily: 'var(--font-instrument)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: isExpanded ? 'normal' : 'nowrap',
-                      }}
-                    >
-                      {isExpanded ? body : body.slice(0, 100) + (body.length > 100 ? '…' : '')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 ml-auto pl-2">
-                    <span className="text-xs font-mono" style={{ color: '#86868B' }}>{formatDateTime(msg.created_at)}</span>
-                    {isExpanded ? <ChevronUp size={14} style={{ color: '#86868B' }} /> : <ChevronDown size={14} style={{ color: '#86868B' }} />}
-                  </div>
-                </div>
-
-                {/* Expanded actions */}
-                {isExpanded && (
-                  <div
-                    className="px-4 pb-4 space-y-3"
-                    style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Reply form */}
-                    <div className="pt-3 flex items-end gap-2">
-                      <textarea
-                        value={replyTexts[msg.client_id] ?? ''}
-                        onChange={(e) => setReplyTexts((prev) => ({ ...prev, [msg.client_id]: e.target.value }))}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(msg.client_id) } }}
-                        placeholder="Responder al cliente… (Enter para enviar)"
-                        rows={2}
-                        style={{ ...inputStyle, resize: 'none', flex: 1, cursor: 'text' }}
-                      />
-                      <button
-                        onClick={() => handleReply(msg.client_id)}
-                        disabled={!(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              {group.messages.map((msg) => {
+                const isClient = msg.author_role === 'client'
+                return (
+                  <div key={msg.id} className={`flex ${isClient ? 'justify-end' : 'justify-start'}`}>
+                    <div style={{ maxWidth: '72%' }}>
+                      <div
+                        className="px-4 py-2.5 text-sm leading-relaxed"
                         style={{
-                          backgroundColor: '#1D1D1F',
-                          color: '#FFFFFF',
-                          border: 'none',
+                          backgroundColor: isClient ? '#1D1D1F' : '#FFFFFF',
+                          color: isClient ? '#FFFFFF' : '#1D1D1F',
+                          borderRadius: isClient ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           fontFamily: 'var(--font-instrument)',
-                          opacity: !(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id) ? 0.45 : 1,
-                          cursor: !(replyTexts[msg.client_id] ?? '').trim() || replySending.has(msg.client_id) ? 'default' : 'pointer',
-                          whiteSpace: 'nowrap',
+                          border: isClient ? 'none' : '1px solid rgba(0,0,0,0.08)',
                         }}
                       >
-                        <Send size={11} />
-                        {replySending.has(msg.client_id) ? 'Enviando…' : 'Enviar'}
-                      </button>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {senderEmail && (
-                        <a
-                          href={`mailto:${senderEmail}?subject=Re: Mensaje desde ${clientName}`}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                          style={{
-                            backgroundColor: 'transparent',
-                            color: '#1D1D1F',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            fontFamily: 'var(--font-instrument)',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                        >
-                          <Mail size={12} /> Correo
-                        </a>
-                      )}
-                      {msg.clients?.website_url && (
-                        <a
-                          href={msg.clients.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                          style={{
-                            backgroundColor: 'transparent',
-                            color: '#86868B',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            fontFamily: 'var(--font-instrument)',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#86868B' }}
-                        >
-                          <ExternalLink size={12} /> Ver web
-                        </a>
-                      )}
-                      {!msg.read && (
-                        <button
-                          onClick={() => markRead(msg.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ml-auto"
-                          style={{
-                            backgroundColor: 'rgba(6,95,70,0.06)',
-                            color: '#065f46',
-                            border: '1px solid rgba(6,95,70,0.15)',
-                            fontFamily: 'var(--font-instrument)',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(6,95,70,0.12)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(6,95,70,0.06)' }}
-                        >
-                          <MailOpen size={12} /> Marcar como leído
-                        </button>
-                      )}
+                        {msg.body}
+                      </div>
+                      <div
+                        className={`text-xs mt-1 ${isClient ? 'text-right' : 'text-left'}`}
+                        style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}
+                      >
+                        {formatTime(msg.created_at)}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+                )
+              })}
+            </div>
+          ))
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Reply input */}
+      <div
+        className="px-5 py-4 flex items-end gap-3 flex-shrink-0"
+        style={{ borderTop: '1px solid rgba(0,0,0,0.07)', backgroundColor: '#FFFFFF' }}
+      >
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Responder… (Enter para enviar)"
+          rows={1}
+          className="flex-1 resize-none rounded-xl px-4 py-3 text-sm outline-none transition-all"
+          style={{
+            backgroundColor: '#F5F5F7',
+            border: '1px solid rgba(0,0,0,0.08)',
+            color: '#1D1D1F',
+            maxHeight: '100px',
+            fontFamily: 'var(--font-instrument)',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.05)' }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.boxShadow = 'none' }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!input.trim() || sending}
+          className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ backgroundColor: '#1D1D1F' }}
+        >
+          <Send size={15} style={{ color: '#FFFFFF' }} />
+        </button>
+      </div>
     </div>
+  )
+}
+
+// ─── Inner page (uses useSearchParams) ────────────────────────────────────────
+
+function MensajesInner() {
+  const searchParams = useSearchParams()
+  const [allMessages, setAllMessages]       = useState<Message[]>([])
+  const [loading, setLoading]               = useState(true)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+
+  const fetchAll = useCallback(async () => {
+    const res = await fetch('/api/admin/all-messages')
+    if (!res.ok) return
+    const data: Message[] = await res.json()
+    setAllMessages(data)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    fetchAll()
+    const interval = setInterval(fetchAll, 30000)
+    return () => clearInterval(interval)
+  }, [fetchAll])
+
+  // Deep-link from email notification
+  useEffect(() => {
+    const client = searchParams.get('client')
+    if (client) setSelectedClientId(client)
+  }, [searchParams])
+
+  const conversations = useMemo(() => buildConversations(allMessages), [allMessages])
+
+  const totalUnread = useMemo(
+    () => conversations.reduce((sum, c) => sum + c.unreadCount, 0),
+    [conversations]
+  )
+
+  const handleUnreadChange = useCallback((clientId: string, count: number) => {
+    setAllMessages((prev) =>
+      prev.map((m) =>
+        m.client_id === clientId && m.author_role === 'client' && count === 0
+          ? { ...m, read: true }
+          : m
+      )
+    )
+  }, [])
+
+  const selectedConv = conversations.find((c) => c.clientId === selectedClientId)
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Page header */}
+      <div
+        className="flex items-center gap-3 px-6 py-5 flex-shrink-0"
+        style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+      >
+        <h1
+          className="text-2xl font-semibold"
+          style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
+        >
+          Mensajes
+        </h1>
+        {totalUnread > 0 && (
+          <span
+            className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
+            style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
+          >
+            {totalUnread} sin leer
+          </span>
+        )}
+      </div>
+
+      {/* Two-panel body */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* ── Left: conversation list ── */}
+        <div
+          className="flex flex-col overflow-hidden flex-shrink-0"
+          style={{ width: '300px', borderRight: '1px solid rgba(0,0,0,0.07)' }}
+        >
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="space-y-1 p-2">
+                {[1,2,3,4].map((i) => (
+                  <div key={i} className="h-16 rounded-xl animate-pulse" style={{ backgroundColor: '#F5F5F7' }} />
+                ))}
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 py-20 px-6 text-center">
+                <MessageSquare size={28} style={{ color: '#D1D1D6' }} />
+                <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                  Aún no hay mensajes
+                </p>
+              </div>
+            ) : (
+              conversations.map((conv) => {
+                const isSelected = conv.clientId === selectedClientId
+                const preview = conv.lastAuthorRole === 'studio'
+                  ? `Tú: ${conv.lastBody}`
+                  : conv.lastBody
+
+                return (
+                  <button
+                    key={conv.clientId}
+                    onClick={() => setSelectedClientId(conv.clientId)}
+                    className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left"
+                    style={{
+                      backgroundColor: isSelected ? '#F5F5F7' : 'transparent',
+                      borderBottom: '1px solid rgba(0,0,0,0.05)',
+                    }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = '#FAFAFA' }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
+                  >
+                    {/* Avatar */}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                      style={{
+                        backgroundColor: isSelected ? '#1D1D1F' : '#E5E5EA',
+                        color: isSelected ? '#FFFFFF' : '#1D1D1F',
+                      }}
+                    >
+                      {initials(conv.clientName)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className="text-sm font-semibold truncate"
+                          style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
+                        >
+                          {conv.clientName}
+                        </span>
+                        <span
+                          className="text-xs flex-shrink-0"
+                          style={{ color: conv.unreadCount > 0 ? '#1D1D1F' : '#86868B', fontFamily: 'var(--font-instrument)', fontWeight: conv.unreadCount > 0 ? 600 : 400 }}
+                        >
+                          {formatConvTime(conv.lastAt)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-1 mt-0.5">
+                        <span
+                          className="text-xs truncate"
+                          style={{
+                            color: '#86868B',
+                            fontFamily: 'var(--font-instrument)',
+                            fontWeight: conv.unreadCount > 0 ? 500 : 400,
+                          }}
+                        >
+                          {preview.length > 45 ? preview.slice(0, 45) + '…' : preview}
+                        </span>
+                        {conv.unreadCount > 0 && (
+                          <span
+                            className="flex-shrink-0 text-xs font-semibold rounded-full flex items-center justify-center"
+                            style={{
+                              backgroundColor: '#1D1D1F',
+                              color: '#FFFFFF',
+                              minWidth: '18px',
+                              height: '18px',
+                              padding: '0 5px',
+                              fontFamily: 'var(--font-instrument)',
+                              fontSize: '11px',
+                            }}
+                          >
+                            {conv.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        {/* ── Right: thread ── */}
+        <div className="flex-1 overflow-hidden">
+          {selectedClientId && selectedConv ? (
+            <ThreadPanel
+              key={selectedClientId}
+              clientId={selectedClientId}
+              clientName={selectedConv.clientName}
+              onUnreadChange={handleUnreadChange}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-3" style={{ backgroundColor: '#FAFAFA' }}>
+              <MessageSquare size={36} style={{ color: '#D1D1D6' }} />
+              <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                Selecciona una conversación
+              </p>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function MensajesPage() {
+  return (
+    <Suspense>
+      <MensajesInner />
+    </Suspense>
   )
 }
