@@ -198,7 +198,7 @@ export default function Sidebar() {
         )}
 
         {/* Footer */}
-        <div className="px-3 pb-6" style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px' }}>
+        <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px' }}>
           {email && (
             <p className="px-3 pb-2 text-xs truncate" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
               {email}
@@ -220,6 +220,29 @@ export default function Sidebar() {
             <LogOut size={16} strokeWidth={1.75} />
             <span>Cerrar sesión</span>
           </button>
+
+          {/* Legal links */}
+          <div className="px-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '8px' }}>
+            <Link
+              href="/politica-de-privacidad"
+              className="text-xs transition-colors"
+              style={{ fontFamily: 'var(--font-instrument)', color: '#C7C7CC' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#C7C7CC' }}
+            >
+              Privacidad
+            </Link>
+            <span className="text-xs" style={{ color: '#C7C7CC' }}>·</span>
+            <Link
+              href="/terminos-de-uso"
+              className="text-xs transition-colors"
+              style={{ fontFamily: 'var(--font-instrument)', color: '#C7C7CC' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#C7C7CC' }}
+            >
+              Términos de uso
+            </Link>
+          </div>
         </div>
       </aside>
     </>
