@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import SupportButton from '@/components/SupportButton'
@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { label: 'Mi cuenta',      href: '/cuenta',         icon: Settings },
 ]
 
+const DISENO_STATUSES = ['building', 'revision']
+
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -22,6 +24,7 @@ export default function Sidebar() {
   const [email, setEmail] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [clientStatus, setClientStatus] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
@@ -39,12 +42,13 @@ export default function Sidebar() {
 
       const { data: client } = await supabase
         .from('clients')
-        .select('business_name, id')
+        .select('business_name, id, status')
         .eq('user_id', user.id)
         .single()
 
       if (client) {
         setBusinessName(client.business_name)
+        setClientStatus(client.status ?? null)
 
         const { count } = await supabase
           .from('messages')
@@ -165,6 +169,36 @@ export default function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV_ITEMS.map(navLink)}
+          {clientStatus && DISENO_STATUSES.includes(clientStatus) && (() => {
+            const isActive = pathname === '/diseno' || pathname.startsWith('/diseno/')
+            return (
+              <Link
+                href="/diseno"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+                style={{
+                  fontFamily: 'var(--font-instrument)',
+                  fontWeight: isActive ? 500 : 400,
+                  color: isActive ? '#1D1D1F' : '#86868B',
+                  backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
+                    e.currentTarget.style.color = '#1D1D1F'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#86868B'
+                  }
+                }}
+              >
+                <Palette size={16} strokeWidth={1.75} />
+                <span>Diseño</span>
+              </Link>
+            )
+          })()}
         </nav>
 
         {/* Admin section */}
