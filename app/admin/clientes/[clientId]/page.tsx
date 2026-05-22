@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, Save, Send, UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, CalendarDays } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, Send, UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, CalendarDays, Palette, FileDown, Check } from 'lucide-react'
 import CardManager, { FieldDef } from '@/components/CardManager'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -26,7 +26,12 @@ interface Client {
   website_url: string
   slug: string
   created_at: string
+  design_survey: Record<string, unknown>
+  design_survey_completed: boolean
+  design_survey_submitted_at: string | null
 }
+
+type SurveyData = Record<string, string | string[]>
 
 interface Message {
   id: string
@@ -40,7 +45,7 @@ interface Message {
   created_at: string
 }
 
-type Tab = 'info' | 'secciones' | 'mensajes'
+type Tab = 'info' | 'secciones' | 'mensajes' | 'diseno'
 
 // ── Style constants ────────────────────────────────────────────────────────────
 
@@ -193,6 +198,12 @@ export default function ClienteDetailPage() {
   const [replyInput, setReplyInput]   = useState('')
   const [replySending, setReplySending] = useState(false)
 
+  // design survey state
+  const [survey, setSurvey]               = useState<SurveyData>({})
+  const [surveyCompleted, setSurveyCompleted] = useState(false)
+  const [surveyAt, setSurveyAt]           = useState<string | null>(null)
+  const [surveySaving, setSurveySaving]   = useState(false)
+
   const showToast = useCallback((msg: string, ok = true) => {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 3000)
@@ -214,6 +225,9 @@ export default function ClienteDetailPage() {
         city:          data.city,
         industry_type: data.industry_type,
       })
+      setSurvey((data.design_survey as SurveyData) ?? {})
+      setSurveyCompleted(data.design_survey_completed ?? false)
+      setSurveyAt(data.design_survey_submitted_at ?? null)
       setLoading(false)
     }
     load()
@@ -268,6 +282,132 @@ export default function ClienteDetailPage() {
 
   function patch(key: keyof Client, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function patchSurvey(key: string, value: string | string[]) {
+    setSurvey((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSaveSurvey() {
+    setSurveySaving(true)
+    const res = await fetch(`/api/admin/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ design_survey: survey }),
+    })
+    setSurveySaving(false)
+    if (res.ok) showToast('Briefing guardado')
+    else showToast('Error al guardar el briefing', false)
+  }
+
+  function downloadPDF() {
+    if (!client) return
+    const s = survey
+    const str = (k: string) => (s[k] as string) || ''
+    const arr = (k: string): string[] => Array.isArray(s[k]) ? s[k] as string[] : []
+
+    function row(label: string, value: string) {
+      if (!value?.trim()) return ''
+      return `<tr>
+        <td style="padding:4px 0;font-size:11px;color:#86868B;width:160px;vertical-align:top;">${label}</td>
+        <td style="padding:4px 0;font-size:13px;color:#1D1D1F;vertical-align:top;white-space:pre-wrap;">${value.replace(/</g,'&lt;')}</td>
+      </tr>`
+    }
+    function sec(title: string, rows: string) {
+      const content = rows.trim()
+      if (!content) return ''
+      return `<div style="margin-bottom:22px;page-break-inside:avoid;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#86868B;border-bottom:1px solid #E5E5EA;padding-bottom:5px;margin-bottom:10px;">${title}</div>
+        <table style="width:100%;border-collapse:collapse;">${content}</table>
+      </div>`
+    }
+
+    const pages = arr('paginas')
+    const fotos = arr('fotos_urls')
+
+    const html = `<!DOCTYPE html><html lang="es"><head>
+      <meta charset="UTF-8">
+      <title>Briefing — ${client.business_name}</title>
+      <style>
+        @page { margin: 18mm 20mm; }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, Arial, sans-serif; color: #1D1D1F; font-size: 13px; margin: 0; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head><body>
+      <div class="no-print" style="background:#1D1D1F;color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;">Presiona <strong>Ctrl+P</strong> / <strong>⌘P</strong> y elige «Guardar como PDF»</span>
+        <button onclick="window.print()" style="background:#E8A020;color:#000;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;">Imprimir / Guardar PDF</button>
+      </div>
+      <div style="max-width:700px;margin:28px auto;padding:0 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:2px solid #1D1D1F;margin-bottom:24px;">
+          <div>
+            <div style="font-size:22px;font-weight:700;">${client.business_name}</div>
+            <div style="font-size:12px;color:#86868B;margin-top:3px;">
+              Briefing de diseño web · ${surveyAt ? new Date(surveyAt).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}) : new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}
+              ${surveyCompleted ? ' · <span style="color:#2A8A5A;font-weight:600;">✓ Enviado por el cliente</span>' : ''}
+            </div>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:#1D1D1F;">Yele Studio</div>
+        </div>
+
+        ${sec('Tu negocio', [
+          row('Descripción', str('descripcion_negocio')),
+          row('Servicio 1', [str('servicio_1_nombre'), str('servicio_1_precio')].filter(Boolean).join(' — ')),
+          row('Servicio 2', [str('servicio_2_nombre'), str('servicio_2_precio')].filter(Boolean).join(' — ')),
+          row('Servicio 3', [str('servicio_3_nombre'), str('servicio_3_precio')].filter(Boolean).join(' — ')),
+          row('Cliente ideal', str('cliente_ideal')),
+          row('Diferenciador', str('diferenciador')),
+        ].join(''))}
+
+        ${sec('Contenido', [
+          row('Años experiencia', str('anos_experiencia')),
+          row('Horario', str('horario')),
+          row('Zona de cobertura', str('zona_cobertura')),
+          row('Historia', str('historia')),
+          row('Testimonio 1', str('testimonio_1_nombre') ? `${str('testimonio_1_nombre')} (${str('testimonio_1_ciudad')}): ${str('testimonio_1_texto')}` : ''),
+          row('Testimonio 2', str('testimonio_2_nombre') ? `${str('testimonio_2_nombre')} (${str('testimonio_2_ciudad')}): ${str('testimonio_2_texto')}` : ''),
+          row('Testimonio 3', str('testimonio_3_nombre') ? `${str('testimonio_3_nombre')} (${str('testimonio_3_ciudad')}): ${str('testimonio_3_texto')}` : ''),
+        ].join(''))}
+
+        ${sec('Identidad visual', [
+          row('Logo', str('tiene_logo')),
+          row('URL logo', str('logo_url')),
+          row('Fotos', str('tiene_fotos')),
+          row('Fotos subidas', fotos.length ? `${fotos.length} foto(s)` : ''),
+          row('Estilo visual', str('estilo_visual')),
+          row('Referencias', str('referencias_urls')),
+          row('Colores de marca', str('colores_marca')),
+        ].join(''))}
+
+        ${sec('La web', [
+          row('Páginas', pages.length ? pages.join(', ') : ''),
+          row('Tipo de contacto', str('contacto_tipo')),
+          row('Dominio', str('tiene_dominio') === 'si' ? `Sí — ${str('dominio_actual')}` : str('tiene_dominio')),
+          row('Extras', str('extras')),
+        ].join(''))}
+
+        ${sec('Contacto y redes', [
+          row('Teléfono', str('telefono')),
+          row('Email', str('email_contacto')),
+          row('WhatsApp', str('whatsapp')),
+          row('Dirección', str('direccion')),
+          row('Instagram', str('instagram')),
+          row('Facebook', str('facebook')),
+          row('Google Business', str('google_business')),
+        ].join(''))}
+
+        <div style="margin-top:32px;padding-top:12px;border-top:1px solid #E5E5EA;font-size:11px;color:#86868B;display:flex;justify-content:space-between;">
+          <span>Yele Studio · yele.design</span>
+          <span>${client.id}</span>
+        </div>
+      </div>
+    </body></html>`
+
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
   }
 
   if (loading) {
@@ -335,9 +475,15 @@ export default function ClienteDetailPage() {
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#F5F5F7', width: 'fit-content' }}>
-        {(['info', 'secciones', 'mensajes'] as Tab[]).map((t) => (
+        {(['info', 'secciones', 'mensajes', 'diseno'] as Tab[]).map((t) => (
           <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>
-            {t === 'info' ? 'Información' : t === 'secciones' ? 'Secciones' : 'Mensajes'}
+            {t === 'info' ? 'Información' : t === 'secciones' ? 'Secciones' : t === 'mensajes' ? 'Mensajes' : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Palette size={12} />
+                Diseño
+                {surveyCompleted && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#2A8A5A', display: 'inline-block' }} />}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -507,6 +653,237 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
+      {/* ── DISEÑO TAB ── */}
+      {tab === 'diseno' && (
+        <div className="space-y-4 max-w-2xl">
+
+          {/* Status + actions bar */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              {surveyCompleted ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(42,138,90,0.08)', color: '#2A8A5A', border: '1px solid rgba(42,138,90,0.2)', fontFamily: 'var(--font-instrument)' }}>
+                  <Check size={11} /> Enviado por el cliente
+                  {surveyAt && <span style={{ fontWeight: 400, color: '#86868B', marginLeft: '4px' }}>{formatDate(surveyAt)}</span>}
+                </span>
+              ) : (
+                <span className="text-xs px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: '#F5F5F7', color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                  Pendiente de envío
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={downloadPDF}
+                className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: '#F5F5F7', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-instrument)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#EBEBED' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
+              >
+                <FileDown size={13} /> Descargar PDF
+              </button>
+              <button onClick={handleSaveSurvey} disabled={surveySaving} style={{ ...S.btnPrimary, opacity: surveySaving ? 0.6 : 1 }}>
+                <Save size={13} />
+                {surveySaving ? 'Guardando…' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Block 1: Negocio ── */}
+          <SurveyCard title="Tu negocio">
+            <SurveyField label="Descripción del negocio">
+              <SurveyTextarea value={survey['descripcion_negocio'] as string ?? ''} onChange={(v) => patchSurvey('descripcion_negocio', v)} rows={3} />
+            </SurveyField>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+              <SurveyField label="Cliente ideal">
+                <SurveyTextarea value={survey['cliente_ideal'] as string ?? ''} onChange={(v) => patchSurvey('cliente_ideal', v)} rows={2} />
+              </SurveyField>
+              <SurveyField label="Diferenciador">
+                <SurveyInput value={survey['diferenciador'] as string ?? ''} onChange={(v) => patchSurvey('diferenciador', v)} />
+              </SurveyField>
+            </div>
+            <div style={{ marginTop: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
+                Servicios
+              </p>
+              {([1, 2, 3] as const).map((i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '8px', marginBottom: '6px' }}>
+                  <SurveyInput
+                    value={survey[`servicio_${i}_nombre`] as string ?? ''}
+                    onChange={(v) => patchSurvey(`servicio_${i}_nombre`, v)}
+                    placeholder={`Servicio ${i}`}
+                  />
+                  <SurveyInput
+                    value={survey[`servicio_${i}_precio`] as string ?? ''}
+                    onChange={(v) => patchSurvey(`servicio_${i}_precio`, v)}
+                    placeholder="Precio"
+                  />
+                </div>
+              ))}
+            </div>
+          </SurveyCard>
+
+          {/* ── Block 2: Contenido ── */}
+          <SurveyCard title="Contenido real">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <SurveyField label="Años de experiencia">
+                <SurveyInput value={survey['anos_experiencia'] as string ?? ''} onChange={(v) => patchSurvey('anos_experiencia', v)} />
+              </SurveyField>
+              <SurveyField label="Zona de cobertura">
+                <SurveyInput value={survey['zona_cobertura'] as string ?? ''} onChange={(v) => patchSurvey('zona_cobertura', v)} />
+              </SurveyField>
+            </div>
+            <SurveyField label="Horario" style={{ marginTop: '12px' }}>
+              <SurveyInput value={survey['horario'] as string ?? ''} onChange={(v) => patchSurvey('horario', v)} />
+            </SurveyField>
+            <SurveyField label="Historia del negocio" style={{ marginTop: '12px' }}>
+              <SurveyTextarea value={survey['historia'] as string ?? ''} onChange={(v) => patchSurvey('historia', v)} rows={3} />
+            </SurveyField>
+            <div style={{ marginTop: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
+                Testimonios
+              </p>
+              {([1, 2, 3] as const).map((i) => (
+                <div key={i} style={{ backgroundColor: '#FAFAFA', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '8px', padding: '10px', marginBottom: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
+                    <SurveyInput value={survey[`testimonio_${i}_nombre`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_nombre`, v)} placeholder="Nombre" />
+                    <SurveyInput value={survey[`testimonio_${i}_ciudad`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_ciudad`, v)} placeholder="Ciudad" />
+                  </div>
+                  <SurveyTextarea value={survey[`testimonio_${i}_texto`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_texto`, v)} placeholder="Texto del testimonio…" rows={2} />
+                </div>
+              ))}
+            </div>
+          </SurveyCard>
+
+          {/* ── Block 3: Identidad visual ── */}
+          <SurveyCard title="Identidad visual">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <SurveyField label="Logo">
+                <SurveyPills
+                  options={[{ value: 'si', label: 'Sí lo tiene' }, { value: 'no', label: 'No tiene' }, { value: 'en_proceso', label: 'En proceso' }]}
+                  value={survey['tiene_logo'] as string ?? ''}
+                  onChange={(v) => patchSurvey('tiene_logo', v)}
+                />
+              </SurveyField>
+              <SurveyField label="Fotos">
+                <SurveyPills
+                  options={[{ value: 'si', label: 'Sí tiene' }, { value: 'no', label: 'No tiene' }, { value: 'pronto', label: 'Pronto' }]}
+                  value={survey['tiene_fotos'] as string ?? ''}
+                  onChange={(v) => patchSurvey('tiene_fotos', v)}
+                />
+              </SurveyField>
+            </div>
+            {(survey['logo_url'] || (survey['fotos_urls'] as string[] ?? []).length > 0) && (
+              <div style={{ marginTop: '10px', padding: '10px 12px', backgroundColor: '#F5F5F7', borderRadius: '8px', fontSize: '12px', color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                {survey['logo_url'] && <p style={{ margin: '0 0 4px' }}>Logo: <a href={survey['logo_url'] as string} target="_blank" rel="noreferrer" style={{ color: '#1D1D1F' }}>ver archivo</a></p>}
+                {(survey['fotos_urls'] as string[] ?? []).length > 0 && <p style={{ margin: 0 }}>{(survey['fotos_urls'] as string[]).length} foto(s) subida(s)</p>}
+              </div>
+            )}
+            <SurveyField label="Estilo visual" style={{ marginTop: '12px' }}>
+              <SurveyPills
+                options={[
+                  { value: 'elegante',   label: 'Elegante' },
+                  { value: 'calido',     label: 'Cálido' },
+                  { value: 'moderno',    label: 'Moderno' },
+                  { value: 'artesanal',  label: 'Artesanal' },
+                  { value: 'atrevido',   label: 'Atrevido' },
+                  { value: 'escogenos',  label: '✦ Escoge tú' },
+                ]}
+                value={survey['estilo_visual'] as string ?? ''}
+                onChange={(v) => patchSurvey('estilo_visual', v)}
+              />
+            </SurveyField>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+              <SurveyField label="Referencias (URLs)">
+                <SurveyTextarea value={survey['referencias_urls'] as string ?? ''} onChange={(v) => patchSurvey('referencias_urls', v)} rows={2} />
+              </SurveyField>
+              <SurveyField label="Colores de marca">
+                <SurveyInput value={survey['colores_marca'] as string ?? ''} onChange={(v) => patchSurvey('colores_marca', v)} />
+              </SurveyField>
+            </div>
+          </SurveyCard>
+
+          {/* ── Block 4: La web ── */}
+          <SurveyCard title="La web">
+            <SurveyField label="Páginas seleccionadas">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                {['inicio','servicios','sobre_mi','galeria','blog','precios','contacto','reservas','tienda','otro'].map((p) => {
+                  const pages = (survey['paginas'] as string[]) ?? []
+                  const locked = p === 'inicio'
+                  const selected = pages.includes(p) || locked
+                  return (
+                    <button key={p} type="button" disabled={locked}
+                      onClick={() => {
+                        const updated = pages.includes(p) ? pages.filter((x) => x !== p) : [...pages, p]
+                        patchSurvey('paginas', updated)
+                      }}
+                      style={{
+                        padding: '5px 12px', borderRadius: '6px', fontSize: '12px', cursor: locked ? 'default' : 'pointer',
+                        fontFamily: 'var(--font-instrument)',
+                        border: `1px solid ${selected ? '#E8A020' : 'rgba(0,0,0,0.08)'}`,
+                        backgroundColor: selected ? 'rgba(232,160,32,0.08)' : 'transparent',
+                        color: selected ? '#E8A020' : '#86868B',
+                      }}
+                    >
+                      {selected && !locked && <Check size={10} style={{ display: 'inline', marginRight: 4 }} />}
+                      {p.replace('_', ' ')}
+                    </button>
+                  )
+                })}
+              </div>
+            </SurveyField>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+              <SurveyField label="Tipo de contacto">
+                <SurveyPills
+                  options={[{ value: 'formulario', label: 'Formulario' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'ambos', label: 'Ambos' }, { value: 'no', label: 'No' }]}
+                  value={survey['contacto_tipo'] as string ?? ''}
+                  onChange={(v) => patchSurvey('contacto_tipo', v)}
+                />
+              </SurveyField>
+              <SurveyField label="Dominio">
+                <SurveyPills
+                  options={[{ value: 'si', label: 'Tiene dominio' }, { value: 'no', label: 'Necesita uno' }]}
+                  value={survey['tiene_dominio'] as string ?? ''}
+                  onChange={(v) => patchSurvey('tiene_dominio', v)}
+                />
+                {survey['tiene_dominio'] === 'si' && (
+                  <div style={{ marginTop: '6px' }}>
+                    <SurveyInput value={survey['dominio_actual'] as string ?? ''} onChange={(v) => patchSurvey('dominio_actual', v)} placeholder="ej. minegocio.es" />
+                  </div>
+                )}
+              </SurveyField>
+            </div>
+            <SurveyField label="Extras / funcionalidades especiales" style={{ marginTop: '12px' }}>
+              <SurveyTextarea value={survey['extras'] as string ?? ''} onChange={(v) => patchSurvey('extras', v)} rows={2} />
+            </SurveyField>
+          </SurveyCard>
+
+          {/* ── Block 5: Contacto y redes ── */}
+          <SurveyCard title="Contacto y redes">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <SurveyField label="Teléfono"><SurveyInput value={survey['telefono'] as string ?? ''} onChange={(v) => patchSurvey('telefono', v)} /></SurveyField>
+              <SurveyField label="Email de contacto"><SurveyInput value={survey['email_contacto'] as string ?? ''} onChange={(v) => patchSurvey('email_contacto', v)} /></SurveyField>
+              <SurveyField label="WhatsApp"><SurveyInput value={survey['whatsapp'] as string ?? ''} onChange={(v) => patchSurvey('whatsapp', v)} /></SurveyField>
+              <SurveyField label="Dirección"><SurveyInput value={survey['direccion'] as string ?? ''} onChange={(v) => patchSurvey('direccion', v)} /></SurveyField>
+              <SurveyField label="Instagram"><SurveyInput value={survey['instagram'] as string ?? ''} onChange={(v) => patchSurvey('instagram', v)} /></SurveyField>
+              <SurveyField label="Facebook"><SurveyInput value={survey['facebook'] as string ?? ''} onChange={(v) => patchSurvey('facebook', v)} /></SurveyField>
+            </div>
+            <SurveyField label="Google Business" style={{ marginTop: '12px' }}>
+              <SurveyInput value={survey['google_business'] as string ?? ''} onChange={(v) => patchSurvey('google_business', v)} placeholder="https://maps.google.com/…" />
+            </SurveyField>
+          </SurveyCard>
+
+          {/* Bottom save */}
+          <div className="flex justify-end pb-8">
+            <button onClick={handleSaveSurvey} disabled={surveySaving} style={{ ...S.btnPrimary, opacity: surveySaving ? 0.6 : 1 }}>
+              <Save size={13} />
+              {surveySaving ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {toast && (
         <div
@@ -521,6 +898,81 @@ export default function ClienteDetailPage() {
           {toast.msg}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Survey sub-components ─────────────────────────────────────────────────────
+
+function SurveyCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' }}>
+      <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#1D1D1F', marginBottom: '14px', fontFamily: 'var(--font-outfit)' }}>
+        {title}
+      </h3>
+      {children}
+    </div>
+  )
+}
+
+function SurveyField({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={style}>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '5px', fontFamily: 'var(--font-instrument)' }}>
+        {label}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+function SurveyInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '7px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+    />
+  )
+}
+
+function SurveyTextarea({ value, onChange, placeholder, rows = 3 }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '7px 10px', fontSize: '13px', outline: 'none', width: '100%', resize: 'vertical', fontFamily: 'var(--font-instrument)' }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+    />
+  )
+}
+
+function SurveyPills({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+      {options.map((opt) => {
+        const sel = value === opt.value
+        return (
+          <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
+            style={{
+              padding: '5px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
+              fontFamily: 'var(--font-instrument)',
+              border: `1px solid ${sel ? '#E8A020' : 'rgba(0,0,0,0.08)'}`,
+              backgroundColor: sel ? 'rgba(232,160,32,0.08)' : '#FFFFFF',
+              color: sel ? '#E8A020' : '#86868B',
+              transition: 'all 0.12s',
+            }}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
