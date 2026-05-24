@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import SupportButton from '@/components/SupportButton'
 
 const NAV_ITEMS = [
@@ -25,10 +25,12 @@ export default function Sidebar() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
   const [clientStatus, setClientStatus] = useState<string | null>(null)
+  const [clientId, setClientId] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
+  // Initial load — profile data only (runs once)
   useEffect(() => {
     async function loadClientData() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -49,20 +51,36 @@ export default function Sidebar() {
       if (client) {
         setBusinessName(client.business_name)
         setClientStatus(client.status ?? null)
-
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('client_id', client.id)
-          .eq('author_role', 'studio')
-          .eq('read', false)
-
-        setUnreadCount(count ?? 0)
+        setClientId(client.id)
       }
     }
 
     loadClientData()
   }, [])
+
+  // Unread count — refresh on every route change + poll every 30 s
+  const refreshUnread = useCallback(async (cid: string) => {
+    const { count } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', cid)
+      .eq('author_role', 'studio')
+      .eq('read', false)
+    setUnreadCount(count ?? 0)
+  }, [])
+
+  useEffect(() => {
+    if (!clientId) return
+    // When on the messages page the client page already marks messages read —
+    // reset the badge immediately so it never stays stale.
+    if (pathname === '/mensajes') {
+      setUnreadCount(0)
+      return
+    }
+    refreshUnread(clientId)
+    const interval = setInterval(() => refreshUnread(clientId), 30_000)
+    return () => clearInterval(interval)
+  }, [clientId, pathname, refreshUnread])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

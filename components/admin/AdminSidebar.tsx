@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Users, MessageSquare, LayoutGrid, LogOut, LayoutDashboard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useEffect, useState, useCallback } from 'react'
 
 const NAV_ITEMS = [
   { label: 'Clientes',  href: '/admin/clientes',  icon: Users },
@@ -21,6 +22,27 @@ function isNavActive(href: string, pathname: string) {
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router   = useRouter()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const refreshUnread = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/unread-count')
+      if (!res.ok) return
+      const { count } = await res.json()
+      setUnreadCount(count ?? 0)
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => {
+    // When viewing the messages page, conversations get marked read — reset immediately.
+    if (pathname === '/admin/mensajes') {
+      setUnreadCount(0)
+      return
+    }
+    refreshUnread()
+    const interval = setInterval(refreshUnread, 30_000)
+    return () => clearInterval(interval)
+  }, [pathname, refreshUnread])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -53,8 +75,9 @@ export default function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map((item) => {
-          const Icon     = item.icon
-          const isActive = isNavActive(item.href, pathname)
+          const Icon      = item.icon
+          const isActive  = isNavActive(item.href, pathname)
+          const isMensajes = item.href === '/admin/mensajes'
 
           return (
             <Link
@@ -82,6 +105,14 @@ export default function AdminSidebar() {
             >
               <Icon size={16} strokeWidth={1.75} />
               <span>{item.label}</span>
+              {isMensajes && unreadCount > 0 && (
+                <span
+                  className="ml-auto text-xs font-semibold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+                  style={{ backgroundColor: '#C8A97E', color: '#FFFFFF' }}
+                >
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           )
         })}
