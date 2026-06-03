@@ -198,6 +198,11 @@ export default function ClienteDetailPage() {
   const [replyInput, setReplyInput]   = useState('')
   const [replySending, setReplySending] = useState(false)
 
+  // sections state
+  const [localSections, setLocalSections]     = useState<string[]>([])
+  const [sectionsSaving, setSectionsSaving]   = useState(false)
+  const [sectionsChanged, setSectionsChanged] = useState(false)
+
   // design survey state
   const [survey, setSurvey]               = useState<SurveyData>({})
   const [surveyCompleted, setSurveyCompleted] = useState(false)
@@ -225,6 +230,7 @@ export default function ClienteDetailPage() {
         city:          data.city,
         industry_type: data.industry_type,
       })
+      setLocalSections(data.dynamic_sections ?? [])
       setSurvey((data.design_survey as SurveyData) ?? {})
       setSurveyCompleted(data.design_survey_completed ?? false)
       setSurveyAt(data.design_survey_submitted_at ?? null)
@@ -277,6 +283,31 @@ export default function ClienteDetailPage() {
     } else {
       const err = await res.json().catch(() => ({}))
       showToast('Error al guardar: ' + (err.error ?? res.statusText), false)
+    }
+  }
+
+  function toggleSection(key: string) {
+    setLocalSections((prev) => {
+      const updated = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      setSectionsChanged(true)
+      return updated
+    })
+  }
+
+  async function handleSaveSections() {
+    setSectionsSaving(true)
+    const res = await fetch(`/api/admin/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dynamic_sections: localSections }),
+    })
+    setSectionsSaving(false)
+    if (res.ok) {
+      setClient((prev) => prev ? { ...prev, dynamic_sections: localSections } : prev)
+      setSectionsChanged(false)
+      showToast('Secciones guardadas')
+    } else {
+      showToast('Error al guardar las secciones', false)
     }
   }
 
@@ -547,12 +578,54 @@ export default function ClienteDetailPage() {
       {/* ── SECCIONES TAB ── */}
       {tab === 'secciones' && (
         <div className="space-y-6">
-          {(!client.dynamic_sections || client.dynamic_sections.length === 0) ? (
+          {/* Section selector */}
+          <div style={S.card}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>
+                Secciones activas
+              </h2>
+              {sectionsChanged && (
+                <button style={S.btnPrimary} onClick={handleSaveSections} disabled={sectionsSaving}>
+                  <Save size={13} />
+                  {sectionsSaving ? 'Guardando…' : 'Guardar secciones'}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(SECTION_CONFIG).map(([key, cfg]) => {
+                const active = localSections.includes(key)
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => toggleSection(key)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      padding: '6px 14px', borderRadius: '8px', fontSize: '12px',
+                      cursor: 'pointer', fontFamily: 'var(--font-instrument)',
+                      border: `1px solid ${active ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                      backgroundColor: active ? '#1D1D1F' : '#FFFFFF',
+                      color: active ? '#FFFFFF' : '#86868B',
+                      transition: 'all 0.12s',
+                    }}
+                  >
+                    {cfg.icon}
+                    {cfg.title}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Section content cards */}
+          {localSections.length === 0 ? (
             <div style={{ ...S.card, textAlign: 'center' }} className="py-10">
-              <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Este cliente no tiene secciones dinámicas configuradas.</p>
+              <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
+                Activa secciones arriba para que el cliente pueda añadir contenido.
+              </p>
             </div>
           ) : (
-            client.dynamic_sections.map((sectionKey) => {
+            localSections.map((sectionKey) => {
               const cfg = SECTION_CONFIG[sectionKey]
               if (!cfg) return (
                 <div key={sectionKey} style={S.card}>
