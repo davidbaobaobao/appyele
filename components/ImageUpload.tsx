@@ -9,12 +9,13 @@ interface Props {
   onChange: (url: string) => void
   clientSlug: string
   tableName: string
+  useAdminApi?: boolean
 }
 
 const ACCEPTED = 'image/jpeg,image/png,image/webp,image/gif'
 const MAX_BYTES = 5 * 1024 * 1024
 
-export default function ImageUpload({ value, onChange, clientSlug, tableName }: Props) {
+export default function ImageUpload({ value, onChange, clientSlug, tableName, useAdminApi = false }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,26 +23,42 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName }: 
   const handleFile = async (file: File) => {
     setError(null)
     if (file.size > MAX_BYTES) {
-      setError('Error al subir la imagen. Máximo 5MB, formatos: JPG, PNG, WebP')
+      setError('Máximo 5 MB. Formatos: JPG, PNG, WebP')
       return
     }
 
     setUploading(true)
     const filePath = `${clientSlug}/${tableName}/${Date.now()}-${file.name}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('client-assets')
-      .upload(filePath, file, { upsert: true })
+    if (useAdminApi) {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('filePath', filePath)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error ?? 'Error al subir la imagen')
+        setUploading(false)
+        return
+      }
+      const { url } = await res.json()
+      onChange(url)
+    } else {
+      const { error: uploadError } = await supabase.storage
+        .from('client-assets')
+        .upload(filePath, file, { upsert: true })
 
-    if (uploadError) {
-      console.error('Storage upload error:', JSON.stringify(uploadError))
-      setError('Error al subir la imagen. Máximo 5MB, formatos: JPG, PNG, WebP')
-      setUploading(false)
-      return
+      if (uploadError) {
+        console.error('Storage upload error:', JSON.stringify(uploadError))
+        setError(uploadError.message)
+        setUploading(false)
+        return
+      }
+
+      const { data } = supabase.storage.from('client-assets').getPublicUrl(filePath)
+      onChange(data.publicUrl)
     }
 
-    const { data } = supabase.storage.from('client-assets').getPublicUrl(filePath)
-    onChange(data.publicUrl)
     setUploading(false)
   }
 
@@ -76,7 +93,6 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName }: 
 
       {value ? (
         <div className="flex items-center gap-3">
-          {/* Thumbnail */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}

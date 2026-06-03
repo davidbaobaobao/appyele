@@ -40,6 +40,7 @@ interface CardManagerProps {
   title: string
   icon?: React.ReactNode
   fields: FieldDef[]
+  useAdminApi?: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -277,7 +278,7 @@ function SortableCard({
 
 const SAVED_NOTICE = 'Los cambios aparecerán en tu web en menos de 60 segundos.'
 
-export default function CardManager({ sectionKey, clientId, clientSlug, title, icon, fields }: CardManagerProps) {
+export default function CardManager({ sectionKey, clientId, clientSlug, title, icon, fields, useAdminApi = false }: CardManagerProps) {
   const supabase = supabaseClient
   const [items, setItems] = useState<RecordData[]>([])
   const [loading, setLoading] = useState(true)
@@ -582,6 +583,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
                         onChange={(url) => setFormData((p) => ({ ...p, [field.key]: url }))}
                         clientSlug={clientSlug ?? 'unknown'}
                         tableName={sectionKey}
+                        useAdminApi={useAdminApi}
                       />
                     ) : field.type === 'toggle' ? (
                       <button

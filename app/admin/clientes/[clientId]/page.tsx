@@ -641,6 +641,7 @@ export default function ClienteDetailPage() {
                   title={cfg.title}
                   icon={cfg.icon}
                   fields={cfg.fields}
+                  useAdminApi
                 />
               )
             })
