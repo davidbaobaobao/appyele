@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette } from 'lucide-react'
+import { LayoutDashboard, Building2, Layers, ShoppingBag, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback } from 'react'
 import SupportButton from '@/components/SupportButton'
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: 'Inicio',         href: '/dashboard',      icon: LayoutDashboard },
   { label: 'Mi negocio',     href: '/negocio',        icon: Building2 },
   { label: 'Contenido',      href: '/contenido',      icon: Layers },
+  { label: 'Store',          href: '/store',          icon: ShoppingBag },
   { label: 'Mensajes',       href: '/mensajes',       icon: MessageSquare },
   { label: 'Mi cuenta',      href: '/cuenta',         icon: Settings },
 ]
@@ -27,6 +28,7 @@ export default function Sidebar() {
   const [clientStatus, setClientStatus] = useState<string | null>(null)
   const [clientId, setClientId] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [hasStore, setHasStore] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
@@ -52,6 +54,14 @@ export default function Sidebar() {
         setBusinessName(client.business_name)
         setClientStatus(client.status ?? null)
         setClientId(client.id)
+
+        // The Store nav item only shows for clients that have a store.
+        const { count: storeCount } = await supabase
+          .from('stores')
+          .select('*', { count: 'exact', head: true })
+          .eq('client_id', client.id)
+
+        setHasStore((storeCount ?? 0) > 0)
       }
     }
 
@@ -186,7 +196,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV_ITEMS.map(navLink)}
+          {NAV_ITEMS.filter((item) => item.href !== '/store' || hasStore).map(navLink)}
           {clientStatus && DISENO_STATUSES.includes(clientStatus) && (() => {
             const isActive = pathname === '/diseno' || pathname.startsWith('/diseno/')
             return (
