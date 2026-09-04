@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette } from 'lucide-react'
+import { LayoutDashboard, Building2, Layers, MessageSquare, Settings, LogOut, ShieldCheck, Menu, X, Palette, ShoppingBag } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback } from 'react'
 import SupportButton from '@/components/SupportButton'
@@ -26,6 +26,7 @@ export default function Sidebar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [clientStatus, setClientStatus] = useState<string | null>(null)
   const [clientId, setClientId] = useState<string | null>(null)
+  const [hasStore, setHasStore] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
@@ -52,6 +53,15 @@ export default function Sidebar() {
         setBusinessName(client.business_name)
         setClientStatus(client.status ?? null)
         setClientId(client.id)
+
+        // The Store item only exists for clients that actually have a store.
+        const { data: store } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('client_id', client.id)
+          .maybeSingle()
+
+        setHasStore(!!store)
       }
     }
 
@@ -178,7 +188,21 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV_ITEMS.map(navLink)}
+          {NAV_ITEMS.slice(0, 3).map(navLink)}
+          {hasStore && (() => {
+            const isActive = pathname === '/store' || pathname.startsWith('/store/')
+            return (
+              <Link
+                href="/store"
+                className="yele-nav-item"
+                data-active={isActive}
+              >
+                <ShoppingBag size={16} strokeWidth={1.75} />
+                <span>Store</span>
+              </Link>
+            )
+          })()}
+          {NAV_ITEMS.slice(3).map(navLink)}
           {clientStatus && DESIGN_STATUSES.includes(clientStatus) && (() => {
             const isActive = pathname === '/diseno' || pathname.startsWith('/diseno/')
             return (
