@@ -2,130 +2,130 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
 export const metadata = {
-  title: 'Política de Privacidad — Yele',
+  title: 'Privacy Policy — Yele',
 }
 
 export default function PoliticaPrivacidadPage() {
   return (
-    <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh' }}>
-      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ backgroundColor: '#F7F6F3', minHeight: '100vh' }}>
+      <div className="max-w-3xl mx-auto px-6 pt-14 pb-28">
 
         {/* Back */}
         <Link
           href="/dashboard"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-instrument)', fontSize: '14px', color: '#86868B', textDecoration: 'none', marginBottom: '40px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-instrument)', fontSize: '14px', color: '#8A8A92', textDecoration: 'none', marginBottom: '56px' }}
         >
           <ArrowLeft size={14} />
-          Volver
+          Back
         </Link>
 
         {/* Header */}
-        <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: '#86868B', margin: '0 0 8px' }}>
+        <p className="yele-eyebrow" style={{ margin: '0 0 16px' }}>
           Yele Studio
         </p>
-        <h1 style={{ fontFamily: 'var(--font-outfit)', fontSize: '32px', fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>
-          Política de Privacidad
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '38px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.12, color: '#16161A', margin: '0 0 16px' }}>
+          Privacy Policy
         </h1>
-        <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '14px', color: '#86868B', margin: '0 0 48px' }}>
-          Última actualización: mayo de 2026
+        <p className="yele-eyebrow" style={{ margin: '0 0 64px' }}>
+          Last updated: May 2026
         </p>
 
-        <div style={{ fontFamily: 'var(--font-instrument)', fontSize: '15px', color: '#3A3A3C', lineHeight: '1.75' }}>
+        <div style={{ fontFamily: 'var(--font-instrument)', fontSize: '16px', color: 'rgba(22,22,26,0.75)', lineHeight: '1.8' }}>
 
-          <Section title="1. Quiénes somos">
+          <Section title="1. Who we are">
             <p>
-              Yele Studio (en adelante, «Yele» o «nosotros») es un estudio de diseño y desarrollo web que ofrece, a través de la plataforma <strong>app.yele.design</strong>, un panel de gestión de presencia digital para sus clientes. El responsable del tratamiento de datos es Yele Studio, contactable en <a href="mailto:info@yele.design" style={{ color: '#1D1D1F' }}>info@yele.design</a>.
+              Yele Studio (hereinafter, &ldquo;Yele&rdquo; or &ldquo;we&rdquo;) is a web design and development studio that provides, through the <strong>app.yele.design</strong>{' '}platform, a digital presence management dashboard for its clients. The data controller is Yele Studio, which can be contacted at <a href="mailto:info@yele.design" style={{ color: '#16161A' }}>info@yele.design</a>.
             </p>
           </Section>
 
-          <Section title="2. Datos que recopilamos">
-            <p>Al usar nuestra plataforma podemos recopilar los siguientes datos:</p>
-            <ul style={{ paddingLeft: '20px', margin: '8px 0 0' }}>
-              <li><strong>Datos de cuenta:</strong> nombre del negocio, correo electrónico, número de teléfono y contraseña (almacenada de forma cifrada).</li>
-              <li><strong>Datos de perfil:</strong> dirección, ciudad, sector de actividad, URL del sitio web, descripción del negocio e información de horarios.</li>
-              <li><strong>Mensajes:</strong> el contenido de las comunicaciones enviadas a través del chat de la plataforma.</li>
-              <li><strong>Datos de uso:</strong> páginas visitadas, acciones realizadas y datos de sesión, utilizados únicamente para mejorar el servicio.</li>
+          <Section title="2. Data we collect">
+            <p>When you use our platform we may collect the following data:</p>
+            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: '10px 0 0' }}>
+              <li><strong>Account data:</strong>{' '}business name, email address, phone number and password (stored in encrypted form).</li>
+              <li><strong>Profile data:</strong>{' '}address, city, industry, website URL, business description and opening hours information.</li>
+              <li><strong>Messages:</strong>{' '}the content of communications sent through the platform chat.</li>
+              <li><strong>Usage data:</strong>{' '}pages visited, actions taken and session data, used solely to improve the service.</li>
             </ul>
           </Section>
 
-          <Section title="3. Finalidad del tratamiento">
-            <p>Utilizamos tus datos para:</p>
-            <ul style={{ paddingLeft: '20px', margin: '8px 0 0' }}>
-              <li>Prestarte el servicio contratado (gestión de tu panel digital).</li>
-              <li>Enviarte notificaciones relacionadas con tu cuenta y el servicio.</li>
-              <li>Atender tus consultas y solicitudes de soporte.</li>
-              <li>Mejorar la plataforma y detectar problemas técnicos.</li>
-              <li>Cumplir con obligaciones legales aplicables.</li>
+          <Section title="3. Purpose of processing">
+            <p>We use your data to:</p>
+            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: '10px 0 0' }}>
+              <li>Provide the service you have contracted (management of your digital dashboard).</li>
+              <li>Send you notifications relating to your account and the service.</li>
+              <li>Handle your enquiries and support requests.</li>
+              <li>Improve the platform and detect technical problems.</li>
+              <li>Comply with applicable legal obligations.</li>
             </ul>
           </Section>
 
-          <Section title="4. Base jurídica">
+          <Section title="4. Legal basis">
             <p>
-              El tratamiento de tus datos se basa en la ejecución del contrato de servicio que aceptas al registrarte, en tu consentimiento expreso cuando corresponda, y en el interés legítimo de Yele en la mejora y seguridad de la plataforma.
+              The processing of your data is based on the performance of the service contract you accept when you register, on your express consent where applicable, and on Yele&rsquo;s legitimate interest in improving and securing the platform.
             </p>
           </Section>
 
-          <Section title="5. Almacenamiento y proveedores">
+          <Section title="5. Storage and providers">
             <p>
-              Los datos se almacenan en servidores seguros gestionados por <strong>Supabase</strong> (infraestructura en la Unión Europea) y se procesan con el apoyo de los siguientes proveedores:
+              Data is stored on secure servers managed by <strong>Supabase</strong>{' '}(infrastructure in the European Union) and is processed with the support of the following providers:
             </p>
-            <ul style={{ paddingLeft: '20px', margin: '8px 0 0' }}>
-              <li><strong>Supabase</strong> — base de datos y autenticación.</li>
-              <li><strong>Vercel</strong> — alojamiento de la aplicación.</li>
-              <li><strong>Resend</strong> — envío de notificaciones por correo electrónico.</li>
+            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: '10px 0 0' }}>
+              <li><strong>Supabase</strong>{' '}— database and authentication.</li>
+              <li><strong>Vercel</strong>{' '}— application hosting.</li>
+              <li><strong>Resend</strong>{' '}— sending email notifications.</li>
             </ul>
-            <p style={{ marginTop: '12px' }}>
-              Todos los proveedores están sujetos a acuerdos de procesamiento de datos que garantizan niveles de protección equivalentes a los exigidos por el RGPD.
+            <p style={{ marginTop: '14px' }}>
+              All providers are bound by data processing agreements that guarantee levels of protection equivalent to those required by the EU General Data Protection Regulation (Reglamento General de Protecci&oacute;n de Datos, RGPD / GDPR).
             </p>
           </Section>
 
-          <Section title="6. Conservación de datos">
+          <Section title="6. Data retention">
             <p>
-              Conservamos tus datos durante el tiempo en que tu cuenta esté activa. Tras la cancelación del servicio, los datos se eliminan en un plazo máximo de 90 días, salvo que exista obligación legal de conservarlos por más tiempo.
+              We keep your data for as long as your account is active. After the service is cancelled, the data is deleted within a maximum of 90 days, unless there is a legal obligation to retain it for longer.
             </p>
           </Section>
 
-          <Section title="7. Tus derechos">
-            <p>Puedes ejercer en cualquier momento los siguientes derechos:</p>
-            <ul style={{ paddingLeft: '20px', margin: '8px 0 0' }}>
-              <li><strong>Acceso:</strong> obtener una copia de los datos que tenemos sobre ti.</li>
-              <li><strong>Rectificación:</strong> corregir datos inexactos o incompletos.</li>
-              <li><strong>Supresión:</strong> solicitar la eliminación de tus datos.</li>
-              <li><strong>Portabilidad:</strong> recibir tus datos en formato estructurado.</li>
-              <li><strong>Oposición y limitación:</strong> oponerte a determinados tratamientos o solicitar su restricción.</li>
+          <Section title="7. Your rights">
+            <p>You may exercise the following rights at any time:</p>
+            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: '10px 0 0' }}>
+              <li><strong>Access:</strong>{' '}obtain a copy of the data we hold about you.</li>
+              <li><strong>Rectification:</strong>{' '}correct inaccurate or incomplete data.</li>
+              <li><strong>Erasure:</strong>{' '}request the deletion of your data.</li>
+              <li><strong>Portability:</strong>{' '}receive your data in a structured format.</li>
+              <li><strong>Objection and restriction:</strong>{' '}object to certain processing or request that it be restricted.</li>
             </ul>
-            <p style={{ marginTop: '12px' }}>
-              Para ejercer cualquiera de estos derechos, escríbenos a <a href="mailto:info@yele.design" style={{ color: '#1D1D1F' }}>info@yele.design</a>. Responderemos en un plazo máximo de 30 días.
+            <p style={{ marginTop: '14px' }}>
+              To exercise any of these rights, write to us at <a href="mailto:info@yele.design" style={{ color: '#16161A' }}>info@yele.design</a>. We will respond within a maximum of 30 days.
             </p>
           </Section>
 
-          <Section title="8. Seguridad">
+          <Section title="8. Security">
             <p>
-              Aplicamos medidas técnicas y organizativas adecuadas para proteger tus datos frente a accesos no autorizados, pérdida o alteración, incluyendo cifrado en tránsito (HTTPS/TLS) y en reposo, control de acceso basado en roles y auditorías periódicas.
+              We apply appropriate technical and organisational measures to protect your data against unauthorised access, loss or alteration, including encryption in transit (HTTPS/TLS) and at rest, role-based access control and periodic audits.
             </p>
           </Section>
 
           <Section title="9. Cookies">
             <p>
-              La plataforma utiliza únicamente cookies estrictamente necesarias para la gestión de sesión de usuario. No utilizamos cookies de publicidad ni de seguimiento de terceros.
+              The platform uses only cookies that are strictly necessary for managing the user session. We do not use advertising cookies or third-party tracking cookies.
             </p>
           </Section>
 
-          <Section title="10. Cambios en esta política" last>
+          <Section title="10. Changes to this policy" last>
             <p>
-              Podemos actualizar esta política ocasionalmente. Notificaremos cambios significativos a través de la plataforma o por correo electrónico con al menos 15 días de antelación. El uso continuado del servicio tras la notificación implica la aceptación de la versión actualizada.
+              We may update this policy from time to time. We will give notice of significant changes through the platform or by email at least 15 days in advance. Continued use of the service after that notice implies acceptance of the updated version.
             </p>
           </Section>
 
         </div>
 
         {/* Footer */}
-        <div style={{ marginTop: '56px', paddingTop: '24px', borderTop: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: '#86868B', margin: 0 }}>
+        <div style={{ marginTop: '72px', paddingTop: '28px', borderTop: '1px solid rgba(22,22,26,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: '#8A8A92', margin: 0 }}>
             © {new Date().getFullYear()} Yele Studio
           </p>
-          <Link href="/terminos-de-uso" style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: '#86868B', textDecoration: 'underline' }}>
-            Términos de uso
+          <Link href="/terminos-de-uso" style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: '#8A8A92', textDecoration: 'underline' }}>
+            Terms of use
           </Link>
         </div>
 
@@ -136,8 +136,8 @@ export default function PoliticaPrivacidadPage() {
 
 function Section({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <div style={{ marginBottom: last ? 0 : '36px' }}>
-      <h2 style={{ fontFamily: 'var(--font-outfit)', fontSize: '17px', fontWeight: 600, color: '#1D1D1F', margin: '0 0 10px' }}>
+    <div style={{ marginBottom: last ? 0 : '44px' }}>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 600, letterSpacing: '-0.015em', color: '#16161A', margin: '0 0 12px' }}>
         {title}
       </h2>
       {children}

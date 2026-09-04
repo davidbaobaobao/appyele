@@ -51,7 +51,7 @@ export default function SupportButton() {
     transition: 'background-color 0.12s',
     textDecoration: 'none',
     color: 'inherit',
-    borderBottom: '1px solid rgba(0,0,0,0.05)',
+    borderBottom: '1px solid rgba(22,22,26,0.05)',
   }
 
   return (
@@ -61,15 +61,12 @@ export default function SupportButton() {
     >
       {/* ── Popup card ── */}
       <div
+        className="yele-card"
         style={{
           position: 'absolute',
           bottom: '60px',
           right: 0,
           width: '256px',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '18px',
-          border: '1px solid rgba(0,0,0,0.08)',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)',
           overflow: 'hidden',
           transformOrigin: 'bottom right',
           transform: open ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(8px)',
@@ -79,12 +76,10 @@ export default function SupportButton() {
         }}
       >
         {/* Header */}
-        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontFamily: 'var(--font-outfit)', fontWeight: 600, fontSize: '14px', color: '#1D1D1F', margin: 0 }}>
-            ¿Necesitas ayuda?
-          </p>
-          <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#86868B', margin: '2px 0 0' }}>
-            Elige cómo contactarnos
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(22,22,26,0.06)' }}>
+          <p className="yele-eyebrow" style={{ margin: 0 }}>Support</p>
+          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '14px', color: '#16161A', margin: '6px 0 0', letterSpacing: '-0.015em' }}>
+            Need help?
           </p>
         </div>
 
@@ -95,23 +90,23 @@ export default function SupportButton() {
           style={rowBase}
           onClick={() => copyText(EMAIL, 'email')}
           onKeyDown={(e) => { if (e.key === 'Enter') copyText(EMAIL, 'email') }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F5F7' }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F2F0EB' }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
         >
-          <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: '#F0F0F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Mail size={16} style={{ color: '#5856D6' }} />
+          <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: 'rgba(43,79,168,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Mail size={16} style={{ color: '#2B4FA8' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#1D1D1F', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#16161A', margin: 0 }}>
               Email
             </p>
-            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#86868B', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {copied === 'email' ? '¡Copiado!' : EMAIL}
+            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#8A8A92', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {copied === 'email' ? 'Copied' : EMAIL}
             </p>
           </div>
           {copied === 'email'
-            ? <Check size={14} style={{ color: '#34C759', flexShrink: 0 }} />
-            : <Copy size={14} style={{ color: '#C7C7CC', flexShrink: 0 }} />
+            ? <Check size={14} style={{ color: '#1F7A55', flexShrink: 0 }} />
+            : <Copy size={14} style={{ color: 'rgba(22,22,26,0.25)', flexShrink: 0 }} />
           }
         </div>
 
@@ -122,34 +117,34 @@ export default function SupportButton() {
             target="_blank"
             rel="noopener noreferrer"
             style={rowBase}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F5F7' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F2F0EB' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
           >
-            <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: '#E8F8ED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: 'rgba(31,122,85,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Phone size={16} style={{ color: '#25D366' }} />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#1D1D1F', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#16161A', margin: 0 }}>
                 WhatsApp
               </p>
-              <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#86868B', margin: 0 }}>
-                Abrir WhatsApp
+              <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#8A8A92', margin: 0 }}>
+                Open WhatsApp
               </p>
             </div>
-            <ExternalLink size={14} style={{ color: '#C7C7CC', flexShrink: 0 }} />
+            <ExternalLink size={14} style={{ color: 'rgba(22,22,26,0.25)', flexShrink: 0 }} />
           </a>
         ) : (
           <div
             style={rowBase}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F5F7' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F2F0EB' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
           >
-            <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: '#E8F8ED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: 'rgba(31,122,85,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Phone size={16} style={{ color: '#25D366' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#1D1D1F', margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#16161A', margin: 0 }}>
                   WhatsApp
                 </p>
                 <a
@@ -157,23 +152,23 @@ export default function SupportButton() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: '#86868B', textDecoration: 'underline', flexShrink: 0 }}
+                  style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: '#8A8A92', textDecoration: 'underline', flexShrink: 0 }}
                 >
-                  Abrir web
+                  Open web
                 </a>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#1D1D1F', margin: 0, fontWeight: 500 }}>
+                <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#16161A', margin: 0, fontWeight: 500 }}>
                   {WA_DISP}
                 </p>
                 <button
                   onClick={(e) => { e.stopPropagation(); copyText(WA_NUM, 'phone') }}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  title="Copiar número"
+                  title="Copy number"
                 >
                   {copied === 'phone'
-                    ? <Check size={12} style={{ color: '#34C759' }} />
-                    : <Copy size={12} style={{ color: '#C7C7CC' }} />
+                    ? <Check size={12} style={{ color: '#1F7A55' }} />
+                    : <Copy size={12} style={{ color: 'rgba(22,22,26,0.25)' }} />
                   }
                 </button>
               </div>
@@ -185,18 +180,18 @@ export default function SupportButton() {
         <button
           style={{ ...rowBase, width: '100%', borderBottom: 'none', background: 'none' }}
           onClick={() => { router.push('/mensajes'); setOpen(false) }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F5F7' }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F2F0EB' }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
         >
-          <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: '#FFF0E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <MessageSquare size={16} style={{ color: '#FF9500' }} />
+          <div style={{ width: 34, height: 34, borderRadius: '10px', backgroundColor: 'rgba(212,111,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <MessageSquare size={16} style={{ color: '#D46FC8' }} />
           </div>
           <div style={{ flex: 1, textAlign: 'left' }}>
-            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#1D1D1F', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 500, color: '#16161A', margin: 0 }}>
               Chat
             </p>
-            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#86868B', margin: 0 }}>
-              Enviar un mensaje
+            <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: '#8A8A92', margin: 0 }}>
+              Send a message
             </p>
           </div>
         </button>
@@ -205,22 +200,17 @@ export default function SupportButton() {
       {/* ── Trigger button ── */}
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Soporte"
+        aria-label="Support"
+        className="yele-btn yele-btn-primary"
         style={{
           width: '48px',
           height: '48px',
-          borderRadius: '50%',
-          backgroundColor: '#1D1D1F',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
+          padding: 0,
+          boxShadow: '0 4px 16px rgba(22,22,26,0.22)',
           transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(0,0,0,0.28)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.22)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(22,22,26,0.28)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(22,22,26,0.22)' }}
       >
         {open
           ? <X size={20} style={{ color: '#FFFFFF' }} />

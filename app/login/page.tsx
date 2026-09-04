@@ -26,7 +26,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('signInWithOAuth threw:', err)
-      setError('Error inesperado al iniciar sesión')
+      setError('Something went wrong signing you in')
       setLoading(false)
     }
   }
@@ -51,173 +51,155 @@ export default function LoginPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: '#FFFFFF',
-    border: '1px solid rgba(0,0,0,0.08)',
-    color: '#1D1D1F',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    fontSize: '14px',
+  const bigButton: React.CSSProperties = {
     width: '100%',
-    outline: 'none',
-    fontFamily: 'var(--font-instrument)',
-    transition: 'all 0.15s',
+    padding: '13px 20px',
+    fontSize: '14px',
   }
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: '#F5F5F7' }}
+      className="min-h-screen flex items-center justify-center px-4 py-12"
+      style={{ backgroundColor: '#F7F6F3' }}
     >
-      <div
-        className="w-full max-w-sm rounded-3xl p-10"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)' }}
-      >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div
-            className="text-3xl font-bold mb-1"
-            style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
+      <div className="w-full max-w-sm">
+        {/* Wordmark */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <span
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#16161A' }}
+            aria-hidden
           >
-            Yele
-          </div>
+            <span className="block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#D46FC8' }} />
+          </span>
+          <span
+            className="text-2xl font-semibold leading-none"
+            style={{ fontFamily: 'var(--font-display)', color: '#16161A', letterSpacing: '-0.02em' }}
+          >
+            yele
+          </span>
         </div>
 
-        {!emailSent ? (
-          <>
-            <h1
-              className="text-xl font-semibold text-center mb-1"
-              style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
-            >
-              Accede a tu panel
-            </h1>
-            <p
-              className="text-center text-sm mb-8"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-            >
-              Gestiona tu web desde aquí
-            </p>
-
-            {error && (
-              <div
-                className="rounded-xl px-4 py-3 mb-4 text-sm"
-                style={{
-                  backgroundColor: 'rgba(153,27,27,0.06)',
-                  color: '#991b1b',
-                  border: '1px solid rgba(153,27,27,0.15)',
-                  fontFamily: 'var(--font-instrument)',
-                }}
+        <div className="yele-card yele-card-lg p-10">
+          {!emailSent ? (
+            <>
+              <p className="yele-eyebrow text-center mb-3">Client portal</p>
+              <h1
+                className="text-2xl font-semibold text-center mb-2"
+                style={{ fontFamily: 'var(--font-display)', color: '#16161A', letterSpacing: '-0.02em' }}
               >
-                {error}
-              </div>
-            )}
-
-            {/* Google button */}
-            <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 rounded-xl py-3 px-4 text-sm transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid rgba(0,0,0,0.08)',
-                color: '#1D1D1F',
-                fontFamily: 'var(--font-instrument)',
-                fontWeight: 500,
-              }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#FFFFFF' }}
-            >
-              <GoogleIcon />
-              Continuar con Google
-            </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
-              <span className="text-xs" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>o</span>
-              <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
-            </div>
-
-            {/* Email button / form */}
-            {!showEmailForm ? (
-              <button
-                onClick={() => setShowEmailForm(true)}
-                className="w-full flex items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm transition-colors"
-                style={{
-                  backgroundColor: 'transparent',
-                  border: '1px solid rgba(0,0,0,0.12)',
-                  color: '#1D1D1F',
-                  fontFamily: 'var(--font-instrument)',
-                  fontWeight: 500,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                Sign in
+              </h1>
+              <p
+                className="text-center text-sm mb-8"
+                style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}
               >
-                Acceder con email
-              </button>
-            ) : (
-              <form onSubmit={handleEmailLogin} className="space-y-3">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  required
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="w-full rounded-xl py-3 px-4 text-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                Manage your website from one place.
+              </p>
+
+              {error && (
+                <div
+                  className="rounded-xl px-4 py-3 mb-4 text-sm"
                   style={{
-                    backgroundColor: '#1D1D1F',
-                    color: '#FFFFFF',
+                    backgroundColor: 'rgba(179,56,43,0.09)',
+                    color: '#B3382B',
+                    border: '1px solid rgba(179,56,43,0.18)',
                     fontFamily: 'var(--font-instrument)',
-                    fontWeight: 500,
                   }}
-                  onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = '0.9' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                 >
-                  {loading ? 'Enviando...' : 'Enviar enlace de acceso'}
+                  {error}
+                </div>
+              )}
+
+              {/* Google button */}
+              <button
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="yele-btn yele-btn-secondary mb-3"
+                style={bigButton}
+              >
+                <GoogleIcon />
+                Continue with Google
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 yele-rule" />
+                <span className="yele-eyebrow" style={{ fontSize: '11px' }}>or</span>
+                <div className="flex-1 yele-rule" />
+              </div>
+
+              {/* Email button / form */}
+              {!showEmailForm ? (
+                <button
+                  onClick={() => setShowEmailForm(true)}
+                  className="yele-btn yele-btn-ghost"
+                  style={bigButton}
+                >
+                  Continue with email
                 </button>
-              </form>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-4">
-            <div className="text-4xl mb-4">📬</div>
-            <h2
-              className="text-xl font-semibold mb-2"
-              style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
-            >
-              Revisa tu bandeja
-            </h2>
-            <p
-              className="text-sm mb-6"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-            >
-              Hemos enviado un enlace de acceso a{' '}
-              <span style={{ color: '#1D1D1F' }}>{email}</span>
-            </p>
-            <button
-              onClick={() => { setEmailSent(false); setShowEmailForm(false); setEmail('') }}
-              className="text-sm transition-colors"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#1D1D1F' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B' }}
-            >
-              ← Volver
-            </button>
-          </div>
-        )}
+              ) : (
+                <form onSubmit={handleEmailLogin} className="space-y-3">
+                  <div>
+                    <label htmlFor="login-email" className="yele-label">Email</label>
+                    <input
+                      id="login-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      required
+                      className="yele-input"
+                      style={{ padding: '12px 16px' }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || !email}
+                    className="yele-btn yele-btn-primary"
+                    style={bigButton}
+                  >
+                    {loading ? 'Sending…' : 'Send sign-in link'}
+                  </button>
+                </form>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <div className="text-4xl mb-4">📬</div>
+              <p className="yele-eyebrow mb-3">Check your inbox</p>
+              <h2
+                className="text-xl font-semibold mb-2"
+                style={{ fontFamily: 'var(--font-display)', color: '#16161A', letterSpacing: '-0.02em' }}
+              >
+                Your link is on its way
+              </h2>
+              <p
+                className="text-sm mb-6"
+                style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}
+              >
+                We sent a sign-in link to{' '}
+                <span style={{ color: '#16161A' }}>{email}</span>
+              </p>
+              <button
+                onClick={() => { setEmailSent(false); setShowEmailForm(false); setEmail('') }}
+                className="yele-btn yele-btn-ghost"
+              >
+                ← Back
+              </button>
+            </div>
+          )}
+        </div>
+
+        <p
+          className="text-center text-xs mt-6"
+          style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}
+        >
+          Need a hand?{' '}
+          <a href="mailto:info@yele.design" style={{ color: '#16161A', textDecoration: 'underline' }}>
+            info@yele.design
+          </a>
+        </p>
       </div>
     </div>
   )

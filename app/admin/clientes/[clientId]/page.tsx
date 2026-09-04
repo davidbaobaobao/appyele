@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, ExternalLink, Save, Send, UtensilsCrossed, Briefcase, Users, Quote, HelpCircle, Tag, Home, Image, CalendarDays, Palette, FileDown, Check } from 'lucide-react'
 import CardManager, { FieldDef } from '@/components/CardManager'
 
+// `listings.type` is stored in Supabase as 'Venta' / 'Alquiler'; only the display label is English.
+const LISTING_TYPE_LABELS: Record<string, string> = { Venta: 'For sale', Alquiler: 'For rent' }
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type ClientStatus = 'intake_pending' | 'building' | 'live' | 'paused' | 'cancelled'
@@ -47,132 +50,133 @@ interface Message {
 
 type Tab = 'info' | 'secciones' | 'mensajes' | 'diseno'
 
-// ── Style constants ────────────────────────────────────────────────────────────
-
-const S = {
-  card: { backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' },
-  label: { display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.07em', color: '#86868B', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
-  input: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
-  select: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
-  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-instrument)' },
-  tab: (active: boolean) => ({ padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', border: 'none', backgroundColor: active ? '#1D1D1F' : 'transparent', color: active ? '#FFFFFF' : '#86868B', fontFamily: 'var(--font-instrument)' }),
-}
+// ── Display labels ─────────────────────────────────────────────────────────────
+// NOTE: `value` on every option below is the value stored in Supabase — never
+// translate it. Only `label` (what the user reads) is English.
 
 const STATUS_OPTIONS = [
-  { value: 'intake_pending', label: 'En revisión' },
-  { value: 'building',       label: 'En construcción' },
-  { value: 'live',           label: 'Activo' },
-  { value: 'paused',         label: 'Pausado' },
-  { value: 'cancelled',      label: 'Cancelado' },
+  { value: 'intake_pending', label: 'In review' },
+  { value: 'building',       label: 'In progress' },
+  { value: 'live',           label: 'Live' },
+  { value: 'paused',         label: 'Paused' },
+  { value: 'cancelled',      label: 'Cancelled' },
 ]
 
 const PLAN_OPTIONS = [
-  { value: 'basica',       label: 'Básica' },
-  { value: 'profesional',  label: 'Profesional' },
-  { value: 'avanzada',     label: 'Avanzada' },
+  { value: 'basica',       label: 'Starter' },
+  { value: 'profesional',  label: 'Pro' },
+  { value: 'avanzada',     label: 'Advanced' },
 ]
 
-const PLAN_LABELS: Record<string, string> = { basica: 'Básica', profesional: 'Profesional', avanzada: 'Avanzada' }
+const PLAN_LABELS: Record<string, string> = { basica: 'Starter', profesional: 'Pro', avanzada: 'Advanced' }
+
+// Stored page keys (left column) → English display label (right column)
+const PAGE_LABELS: Record<string, string> = {
+  inicio: 'Home', servicios: 'Services', sobre_mi: 'About', galeria: 'Gallery',
+  blog: 'Blog', precios: 'Pricing', contacto: 'Contact', reservas: 'Bookings',
+  tienda: 'Shop', otro: 'Other',
+}
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 function formatDateTime(d: string) {
-  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 // ── Section config (mirrored from contenido page) ──────────────────────────────
 
 const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fields: FieldDef[] }> = {
   catalog_items: {
-    title: 'Carta / Catálogo',
+    title: 'Menu / Catalog',
     icon: <UtensilsCrossed size={14} />,
     fields: [
-      { key: 'name',        label: 'Nombre',      type: 'text',     required: true, placeholder: 'Ej. Paella valenciana' },
-      { key: 'category',    label: 'Categoría',   type: 'text',     placeholder: 'Ej. Arroces' },
-      { key: 'description', label: 'Descripción', type: 'textarea', placeholder: 'Describe el producto…' },
-      { key: 'price',       label: 'Precio',      type: 'text',     placeholder: 'Ej. 14,50 €' },
-      { key: 'image_url',   label: 'Imagen',      type: 'image' },
-      { key: 'available',   label: 'Disponible',  type: 'toggle' },
+      { key: 'name',        label: 'Name',        type: 'text',     required: true, placeholder: 'e.g. Seafood paella' },
+      { key: 'category',    label: 'Category',    type: 'text',     placeholder: 'e.g. Mains' },
+      { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Describe the item…' },
+      { key: 'price',       label: 'Price',       type: 'text',     placeholder: 'e.g. $14.50' },
+      { key: 'image_url',   label: 'Image',       type: 'image' },
+      { key: 'available',   label: 'Available',   type: 'toggle' },
     ],
   },
   services: {
-    title: 'Servicios',
+    title: 'Services',
     icon: <Briefcase size={14} />,
     fields: [
-      { key: 'name',        label: 'Nombre del servicio', type: 'text',     required: true },
-      { key: 'description', label: 'Descripción',         type: 'textarea' },
-      { key: 'price',       label: 'Precio',              type: 'text',     placeholder: 'Ej. Desde 50 €' },
-      { key: 'price_label', label: 'Etiqueta de precio',  type: 'text',     placeholder: 'Ej. Consultar' },
+      { key: 'name',        label: 'Service name', type: 'text',     required: true },
+      { key: 'description', label: 'Description',  type: 'textarea' },
+      { key: 'price',       label: 'Price',        type: 'text',     placeholder: 'e.g. From $50' },
+      { key: 'price_label', label: 'Price label',  type: 'text',     placeholder: 'e.g. On request' },
     ],
   },
   team_members: {
-    title: 'Equipo',
+    title: 'Team',
     icon: <Users size={14} />,
     fields: [
-      { key: 'name',      label: 'Nombre', type: 'text', required: true },
-      { key: 'role',      label: 'Cargo',  type: 'text' },
-      { key: 'photo_url', label: 'Foto',   type: 'image' },
+      { key: 'name',      label: 'Name',  type: 'text', required: true },
+      { key: 'role',      label: 'Role',  type: 'text' },
+      { key: 'photo_url', label: 'Photo', type: 'image' },
     ],
   },
   testimonials: {
-    title: 'Testimonios',
+    title: 'Testimonials',
     icon: <Quote size={14} />,
     fields: [
-      { key: 'author_name', label: 'Nombre del autor', type: 'text',     required: true },
-      { key: 'role',        label: 'Cargo del autor',  type: 'text' },
-      { key: 'body',        label: 'Testimonio',       type: 'textarea', required: true },
-      { key: 'rating',      label: 'Valoración (1–5)', type: 'number',   placeholder: '5' },
+      { key: 'author_name', label: 'Author name', type: 'text',     required: true },
+      { key: 'role',        label: 'Author role', type: 'text' },
+      { key: 'body',        label: 'Testimonial', type: 'textarea', required: true },
+      { key: 'rating',      label: 'Rating (1–5)', type: 'number',  placeholder: '5' },
     ],
   },
   faqs: {
-    title: 'Preguntas frecuentes',
+    title: 'FAQs',
     icon: <HelpCircle size={14} />,
     fields: [
-      { key: 'question', label: 'Pregunta',  type: 'text',     required: true },
-      { key: 'answer',   label: 'Respuesta', type: 'textarea', required: true },
+      { key: 'question', label: 'Question', type: 'text',     required: true },
+      { key: 'answer',   label: 'Answer',   type: 'textarea', required: true },
     ],
   },
   offers: {
-    title: 'Ofertas',
+    title: 'Offers',
     icon: <Tag size={14} />,
     fields: [
-      { key: 'title',       label: 'Título',           type: 'text',     required: true },
-      { key: 'badge',       label: 'Etiqueta (badge)', type: 'text',     placeholder: 'Ej. -20%' },
-      { key: 'description', label: 'Descripción',      type: 'textarea' },
-      { key: 'valid_until', label: 'Válido hasta',     type: 'date' },
+      { key: 'title',       label: 'Title',       type: 'text',     required: true },
+      { key: 'badge',       label: 'Badge',       type: 'text',     placeholder: 'e.g. -20%' },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'valid_until', label: 'Valid until', type: 'date' },
     ],
   },
   listings: {
-    title: 'Inmuebles',
+    title: 'Listings',
     icon: <Home size={14} />,
     fields: [
-      { key: 'title',    label: 'Título',          type: 'text',   required: true },
-      { key: 'type',     label: 'Tipo',            type: 'select', options: ['Venta', 'Alquiler'] },
-      { key: 'price',    label: 'Precio',          type: 'text' },
-      { key: 'size_m2',  label: 'Superficie (m²)', type: 'number' },
-      { key: 'rooms',    label: 'Habitaciones',    type: 'number' },
-      { key: 'location', label: 'Ubicación',       type: 'text' },
+      { key: 'title',    label: 'Title',      type: 'text',   required: true },
+      // 'Venta' / 'Alquiler' are stored values, also compared in CardManager — left as-is
+      { key: 'type',     label: 'Type',       type: 'select', options: ['Venta', 'Alquiler'], optionLabels: LISTING_TYPE_LABELS },
+      { key: 'price',    label: 'Price',      type: 'text' },
+      { key: 'size_m2',  label: 'Size (m²)',  type: 'number' },
+      { key: 'rooms',    label: 'Rooms',      type: 'number' },
+      { key: 'location', label: 'Location',   type: 'text' },
     ],
   },
   gallery: {
-    title: 'Galería',
+    title: 'Showcase',
     icon: <Image size={14} />,
     fields: [
-      { key: 'image_url', label: 'Imagen',      type: 'image' },
-      { key: 'caption',   label: 'Descripción', type: 'text' },
-      { key: 'category',  label: 'Categoría',   type: 'text' },
+      { key: 'image_url', label: 'Image',    type: 'image' },
+      { key: 'caption',   label: 'Caption',  type: 'text' },
+      { key: 'category',  label: 'Category', type: 'text' },
     ],
   },
   sessions_dates: {
-    title: 'Fechas de sesión',
+    title: 'Session dates',
     icon: <CalendarDays size={14} />,
     fields: [
-      { key: 'title',            label: 'Título',          type: 'text' },
-      { key: 'date',             label: 'Fecha',           type: 'date' },
-      { key: 'time',             label: 'Hora',            type: 'text', placeholder: 'Ej. 10:00' },
-      { key: 'max_participants', label: 'Máx. asistentes', type: 'number' },
-      { key: 'available',        label: 'Disponible',      type: 'toggle' },
+      { key: 'title',            label: 'Title',        type: 'text' },
+      { key: 'date',             label: 'Date',         type: 'date' },
+      { key: 'time',             label: 'Time',         type: 'text', placeholder: 'e.g. 10:00' },
+      { key: 'max_participants', label: 'Max attendees', type: 'number' },
+      { key: 'available',        label: 'Available',    type: 'toggle' },
     ],
   },
 }
@@ -265,7 +269,7 @@ export default function ClienteDetailPage() {
       setMessages(data)
     } else {
       const err = await res.json().catch(() => ({}))
-      showToast('Error al enviar: ' + (err.error ?? 'desconocido'), false)
+      showToast("Couldn't send: " + (err.error ?? 'unknown'), false)
     }
   }
 
@@ -279,10 +283,10 @@ export default function ClienteDetailPage() {
     setSaving(false)
     if (res.ok) {
       setClient((prev) => prev ? { ...prev, ...form } : prev)
-      showToast('Cambios guardados')
+      showToast('Changes saved')
     } else {
       const err = await res.json().catch(() => ({}))
-      showToast('Error al guardar: ' + (err.error ?? res.statusText), false)
+      showToast("Couldn't save: " + (err.error ?? res.statusText), false)
     }
   }
 
@@ -305,9 +309,9 @@ export default function ClienteDetailPage() {
     if (res.ok) {
       setClient((prev) => prev ? { ...prev, dynamic_sections: localSections } : prev)
       setSectionsChanged(false)
-      showToast('Secciones guardadas')
+      showToast('Sections saved')
     } else {
-      showToast('Error al guardar las secciones', false)
+      showToast("Couldn't save sections", false)
     }
   }
 
@@ -327,8 +331,8 @@ export default function ClienteDetailPage() {
       body: JSON.stringify({ design_survey: survey }),
     })
     setSurveySaving(false)
-    if (res.ok) showToast('Briefing guardado')
-    else showToast('Error al guardar el briefing', false)
+    if (res.ok) showToast('Brief saved')
+    else showToast("Couldn't save the brief", false)
   }
 
   function downloadPDF() {
@@ -340,15 +344,15 @@ export default function ClienteDetailPage() {
     function row(label: string, value: string) {
       if (!value?.trim()) return ''
       return `<tr>
-        <td style="padding:4px 0;font-size:11px;color:#86868B;width:160px;vertical-align:top;">${label}</td>
-        <td style="padding:4px 0;font-size:13px;color:#1D1D1F;vertical-align:top;white-space:pre-wrap;">${value.replace(/</g,'&lt;')}</td>
+        <td style="padding:4px 0;font-size:11px;color:#8A8A92;width:160px;vertical-align:top;">${label}</td>
+        <td style="padding:4px 0;font-size:13px;color:#16161A;vertical-align:top;white-space:pre-wrap;">${value.replace(/</g,'&lt;')}</td>
       </tr>`
     }
     function sec(title: string, rows: string) {
       const content = rows.trim()
       if (!content) return ''
       return `<div style="margin-bottom:22px;page-break-inside:avoid;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#86868B;border-bottom:1px solid #E5E5EA;padding-bottom:5px;margin-bottom:10px;">${title}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8A8A92;border-bottom:1px solid #E4E1DA;padding-bottom:5px;margin-bottom:10px;">${title}</div>
         <table style="width:100%;border-collapse:collapse;">${content}</table>
       </div>`
     }
@@ -356,79 +360,80 @@ export default function ClienteDetailPage() {
     const pages = arr('paginas')
     const fotos = arr('fotos_urls')
 
-    const html = `<!DOCTYPE html><html lang="es"><head>
+    const html = `<!DOCTYPE html><html lang="en"><head>
       <meta charset="UTF-8">
-      <title>Briefing — ${client.business_name}</title>
+      <title>Brief — ${client.business_name}</title>
       <style>
         @page { margin: 18mm 20mm; }
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, Arial, sans-serif; color: #1D1D1F; font-size: 13px; margin: 0; }
+        body { font-family: -apple-system, Arial, sans-serif; color: #16161A; font-size: 13px; margin: 0; }
         @media print { .no-print { display: none; } }
       </style>
     </head><body>
-      <div class="no-print" style="background:#1D1D1F;color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;">Presiona <strong>Ctrl+P</strong> / <strong>⌘P</strong> y elige «Guardar como PDF»</span>
-        <button onclick="window.print()" style="background:#E8A020;color:#000;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;">Imprimir / Guardar PDF</button>
+      <div class="no-print" style="background:#16161A;color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;">Press <strong>Ctrl+P</strong> / <strong>⌘P</strong> and choose &ldquo;Save as PDF&rdquo;</span>
+        <button onclick="window.print()" style="background:#D46FC8;color:#FFFFFF;border:none;padding:8px 18px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:13px;">Print / Save PDF</button>
       </div>
       <div style="max-width:700px;margin:28px auto;padding:0 20px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:2px solid #1D1D1F;margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:2px solid #16161A;margin-bottom:24px;">
           <div>
             <div style="font-size:22px;font-weight:700;">${client.business_name}</div>
-            <div style="font-size:12px;color:#86868B;margin-top:3px;">
-              Briefing de diseño web · ${surveyAt ? new Date(surveyAt).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}) : new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}
-              ${surveyCompleted ? ' · <span style="color:#2A8A5A;font-weight:600;">✓ Enviado por el cliente</span>' : ''}
+            <div style="font-size:12px;color:#8A8A92;margin-top:3px;">
+              Web design brief · ${surveyAt ? new Date(surveyAt).toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'}) : new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}
+              ${surveyCompleted ? ' · <span style="color:#1F7A55;font-weight:600;">✓ Submitted by client</span>' : ''}
             </div>
           </div>
-          <div style="font-size:16px;font-weight:700;color:#1D1D1F;">Yele Studio</div>
+          <div style="font-size:16px;font-weight:700;color:#16161A;">Yele Studio</div>
         </div>
 
-        ${sec('Tu negocio', [
-          row('Descripción', str('descripcion_negocio')),
-          row('Servicio 1', [str('servicio_1_nombre'), str('servicio_1_precio')].filter(Boolean).join(' — ')),
-          row('Servicio 2', [str('servicio_2_nombre'), str('servicio_2_precio')].filter(Boolean).join(' — ')),
-          row('Servicio 3', [str('servicio_3_nombre'), str('servicio_3_precio')].filter(Boolean).join(' — ')),
-          row('Cliente ideal', str('cliente_ideal')),
-          row('Diferenciador', str('diferenciador')),
+        ${sec('Your business', [
+          row('Description', str('descripcion_negocio')),
+          row('Service 1', [str('servicio_1_nombre'), str('servicio_1_precio')].filter(Boolean).join(' — ')),
+          row('Service 2', [str('servicio_2_nombre'), str('servicio_2_precio')].filter(Boolean).join(' — ')),
+          row('Service 3', [str('servicio_3_nombre'), str('servicio_3_precio')].filter(Boolean).join(' — ')),
+          row('Ideal client', str('cliente_ideal')),
+          row('What sets them apart', str('diferenciador')),
         ].join(''))}
 
-        ${sec('Contenido', [
-          row('Años experiencia', str('anos_experiencia')),
-          row('Horario', str('horario')),
-          row('Zona de cobertura', str('zona_cobertura')),
-          row('Historia', str('historia')),
-          row('Testimonio 1', str('testimonio_1_nombre') ? `${str('testimonio_1_nombre')} (${str('testimonio_1_ciudad')}): ${str('testimonio_1_texto')}` : ''),
-          row('Testimonio 2', str('testimonio_2_nombre') ? `${str('testimonio_2_nombre')} (${str('testimonio_2_ciudad')}): ${str('testimonio_2_texto')}` : ''),
-          row('Testimonio 3', str('testimonio_3_nombre') ? `${str('testimonio_3_nombre')} (${str('testimonio_3_ciudad')}): ${str('testimonio_3_texto')}` : ''),
+        ${sec('Content', [
+          row('Years of experience', str('anos_experiencia')),
+          row('Opening hours', str('horario')),
+          row('Service area', str('zona_cobertura')),
+          row('Story', str('historia')),
+          row('Testimonial 1', str('testimonio_1_nombre') ? `${str('testimonio_1_nombre')} (${str('testimonio_1_ciudad')}): ${str('testimonio_1_texto')}` : ''),
+          row('Testimonial 2', str('testimonio_2_nombre') ? `${str('testimonio_2_nombre')} (${str('testimonio_2_ciudad')}): ${str('testimonio_2_texto')}` : ''),
+          row('Testimonial 3', str('testimonio_3_nombre') ? `${str('testimonio_3_nombre')} (${str('testimonio_3_ciudad')}): ${str('testimonio_3_texto')}` : ''),
         ].join(''))}
 
-        ${sec('Identidad visual', [
+        ${sec('Visual identity', [
           row('Logo', str('tiene_logo')),
-          row('URL logo', str('logo_url')),
-          row('Fotos', str('tiene_fotos')),
-          row('Fotos subidas', fotos.length ? `${fotos.length} foto(s)` : ''),
-          row('Estilo visual', str('estilo_visual')),
-          row('Referencias', str('referencias_urls')),
-          row('Colores de marca', str('colores_marca')),
+          row('Logo URL', str('logo_url')),
+          row('Photos', str('tiene_fotos')),
+          row('Photos uploaded', fotos.length ? `${fotos.length} photo(s)` : ''),
+          row('Visual style', str('estilo_visual')),
+          row('References', str('referencias_urls')),
+          row('Brand colors', str('colores_marca')),
         ].join(''))}
 
-        ${sec('La web', [
-          row('Páginas', pages.length ? pages.join(', ') : ''),
-          row('Tipo de contacto', str('contacto_tipo')),
-          row('Dominio', str('tiene_dominio') === 'si' ? `Sí — ${str('dominio_actual')}` : str('tiene_dominio')),
+        ${sec('The website', [
+          row('Pages', pages.length ? pages.map((p) => PAGE_LABELS[p] ?? p).join(', ') : ''),
+          row('Contact type', str('contacto_tipo')),
+          // 'si' is the stored value — only the printed text is English
+          row('Domain', str('tiene_dominio') === 'si' ? `Yes — ${str('dominio_actual')}` : str('tiene_dominio')),
           row('Extras', str('extras')),
         ].join(''))}
 
-        ${sec('Contacto y redes', [
-          row('Teléfono', str('telefono')),
+        ${sec('Contact and social', [
+          row('Phone', str('telefono')),
           row('Email', str('email_contacto')),
           row('WhatsApp', str('whatsapp')),
-          row('Dirección', str('direccion')),
+          row('Address', str('direccion')),
           row('Instagram', str('instagram')),
           row('Facebook', str('facebook')),
           row('Google Business', str('google_business')),
         ].join(''))}
 
-        <div style="margin-top:32px;padding-top:12px;border-top:1px solid #E5E5EA;font-size:11px;color:#86868B;display:flex;justify-content:space-between;">
+        <div style="margin-top:32px;padding-top:12px;border-top:1px solid #E4E1DA;font-size:11px;color:#8A8A92;display:flex;justify-content:space-between;">
           <span>Yele Studio · yele.design</span>
           <span>${client.id}</span>
         </div>
@@ -445,8 +450,8 @@ export default function ClienteDetailPage() {
     return (
       <div className="flex-1 p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded-xl" style={{ backgroundColor: '#F5F5F7' }} />
-          <div className="h-64 rounded-2xl" style={{ backgroundColor: '#F5F5F7' }} />
+          <div className="h-8 w-48 rounded-xl" style={{ backgroundColor: '#F2F0EB' }} />
+          <div className="h-64 rounded-2xl" style={{ backgroundColor: '#F2F0EB' }} />
         </div>
       </div>
     )
@@ -455,7 +460,7 @@ export default function ClienteDetailPage() {
   if (!client) {
     return (
       <div className="flex-1 p-6">
-        <p className="text-sm" style={{ color: '#991b1b' }}>Cliente no encontrado.</p>
+        <p className="text-sm" style={{ color: '#B3382B' }}>Client not found.</p>
       </div>
     )
   }
@@ -466,25 +471,25 @@ export default function ClienteDetailPage() {
       <button
         onClick={() => router.push('/admin/clientes')}
         className="flex items-center gap-2 text-sm transition-colors"
-        style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = '#1D1D1F' }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B' }}
+        style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = '#16161A' }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = '#8A8A92' }}
       >
-        <ArrowLeft size={15} /> Volver a clientes
+        <ArrowLeft size={15} /> Back to clients
       </button>
 
       {/* Header */}
       <div className="flex items-center gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
+          <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-display)', color: '#16161A' }}>
             {client.business_name}
           </h1>
-          <p className="text-xs mt-0.5 font-mono" style={{ color: '#86868B' }}>{client.id}</p>
+          <p className="yele-eyebrow mt-1.5">{client.id}</p>
         </div>
         {client.plan && (
           <span
-            className="text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: '#F5F5F7', color: '#86868B', border: '1px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-instrument)' }}
+            className="yele-pill"
+            style={{ backgroundColor: '#F2F0EB', color: '#8A8A92', border: '1px solid rgba(22,22,26,0.08)' }}
           >
             {PLAN_LABELS[client.plan] ?? client.plan}
           </span>
@@ -495,24 +500,30 @@ export default function ClienteDetailPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-xs transition-colors"
-            style={{ color: '#C8A97E', fontFamily: 'var(--font-instrument)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#92400e' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = '#C8A97E' }}
+            style={{ color: '#D46FC8', fontFamily: 'var(--font-instrument)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#8A5A16' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#D46FC8' }}
           >
-            <ExternalLink size={12} /> Ver web
+            <ExternalLink size={12} /> View site
           </a>
         )}
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#F5F5F7', width: 'fit-content' }}>
+      <div className="flex items-center gap-1 p-1 rounded-full" style={{ backgroundColor: '#F2F0EB', width: 'fit-content' }}>
         {(['info', 'secciones', 'mensajes', 'diseno'] as Tab[]).map((t) => (
-          <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>
-            {t === 'info' ? 'Información' : t === 'secciones' ? 'Secciones' : t === 'mensajes' ? 'Mensajes' : (
+          // `t` is internal tab state, not a stored value — only the label is translated
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`yele-btn ${tab === t ? 'yele-btn-primary' : 'yele-btn-ghost'}`}
+          >
+            {t === 'info' ? 'Details' : t === 'secciones' ? 'Sections' : t === 'mensajes' ? 'Messages' : (
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Palette size={12} />
-                Diseño
-                {surveyCompleted && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#2A8A5A', display: 'inline-block' }} />}
+                Design
+                {surveyCompleted && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#1F7A55', display: 'inline-block' }} />}
               </span>
             )}
           </button>
@@ -521,73 +532,80 @@ export default function ClienteDetailPage() {
 
       {/* ── INFO TAB ── */}
       {tab === 'info' && (
-        <div style={S.card} className="max-w-2xl space-y-5">
-          <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>Datos del cliente</h2>
+        <div className="yele-card-quiet max-w-2xl space-y-5 p-5">
+          <div>
+            <p className="yele-eyebrow mb-2">Client</p>
+            <h2 className="text-sm font-semibold" style={{ color: '#16161A', fontFamily: 'var(--font-display)' }}>Client details</h2>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={S.label}>Nombre del negocio</label>
-              <input style={S.input} value={form.business_name ?? ''} onChange={(e) => patch('business_name', e.target.value)} />
+              <label className="yele-label">Business name</label>
+              <input className="yele-input" value={form.business_name ?? ''} onChange={(e) => patch('business_name', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>Email</label>
-              <input style={S.input} type="email" value={form.email ?? ''} onChange={(e) => patch('email', e.target.value)} />
+              <label className="yele-label">Email</label>
+              <input className="yele-input" type="email" value={form.email ?? ''} onChange={(e) => patch('email', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>Teléfono</label>
-              <input style={S.input} value={form.phone ?? ''} onChange={(e) => patch('phone', e.target.value)} />
+              <label className="yele-label">Phone</label>
+              <input className="yele-input" value={form.phone ?? ''} onChange={(e) => patch('phone', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>Ciudad</label>
-              <input style={S.input} value={form.city ?? ''} onChange={(e) => patch('city', e.target.value)} />
+              <label className="yele-label">City</label>
+              <input className="yele-input" value={form.city ?? ''} onChange={(e) => patch('city', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>Sector</label>
-              <input style={S.input} value={form.industry_type ?? ''} onChange={(e) => patch('industry_type', e.target.value)} />
+              <label className="yele-label">Industry</label>
+              <input className="yele-input" value={form.industry_type ?? ''} onChange={(e) => patch('industry_type', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>URL del sitio</label>
-              <input style={S.input} value={form.website_url ?? ''} onChange={(e) => patch('website_url', e.target.value)} />
+              <label className="yele-label">Site URL</label>
+              <input className="yele-input" value={form.website_url ?? ''} onChange={(e) => patch('website_url', e.target.value)} />
             </div>
             <div>
-              <label style={S.label}>Plan</label>
-              <select style={S.select} value={form.plan ?? ''} onChange={(e) => patch('plan', e.target.value)}>
+              <label className="yele-label">Plan</label>
+              {/* option values stay Spanish (stored in Supabase); labels are English */}
+              <select className="yele-select" value={form.plan ?? ''} onChange={(e) => patch('plan', e.target.value)}>
                 {PLAN_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label style={S.label}>Estado</label>
-              <select style={S.select} value={form.status ?? ''} onChange={(e) => patch('status', e.target.value as ClientStatus)}>
+              <label className="yele-label">Status</label>
+              <select className="yele-select" value={form.status ?? ''} onChange={(e) => patch('status', e.target.value as ClientStatus)}>
                 {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="h-px" style={{ backgroundColor: 'rgba(0,0,0,0.06)' }} />
+          <div className="yele-rule" />
 
           <div className="flex items-center justify-between">
-            <p className="text-xs" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Alta: {formatDate(client.created_at)}</p>
-            <button style={S.btnPrimary} onClick={handleSaveInfo} disabled={saving}>
+            <p className="yele-eyebrow">Joined {formatDate(client.created_at)}</p>
+            <button className="yele-btn yele-btn-primary" onClick={handleSaveInfo} disabled={saving}>
               <Save size={13} />
-              {saving ? 'Guardando…' : 'Guardar cambios'}
+              {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── SECCIONES TAB ── */}
+      {/* ── SECTIONS TAB ── */}
       {tab === 'secciones' && (
         <div className="space-y-6">
           {/* Section selector */}
-          <div style={S.card}>
+          <div className="yele-card-quiet p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>
-                Secciones activas
-              </h2>
+              <div>
+                <p className="yele-eyebrow mb-2">{localSections.length} of {Object.keys(SECTION_CONFIG).length} on</p>
+                <h2 className="text-sm font-semibold" style={{ color: '#16161A', fontFamily: 'var(--font-display)' }}>
+                  Active sections
+                </h2>
+              </div>
               {sectionsChanged && (
-                <button style={S.btnPrimary} onClick={handleSaveSections} disabled={sectionsSaving}>
+                <button className="yele-btn yele-btn-primary" onClick={handleSaveSections} disabled={sectionsSaving}>
                   <Save size={13} />
-                  {sectionsSaving ? 'Guardando…' : 'Guardar secciones'}
+                  {sectionsSaving ? 'Saving…' : 'Save sections'}
                 </button>
               )}
             </div>
@@ -599,15 +617,7 @@ export default function ClienteDetailPage() {
                     key={key}
                     type="button"
                     onClick={() => toggleSection(key)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      padding: '6px 14px', borderRadius: '8px', fontSize: '12px',
-                      cursor: 'pointer', fontFamily: 'var(--font-instrument)',
-                      border: `1px solid ${active ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
-                      backgroundColor: active ? '#1D1D1F' : '#FFFFFF',
-                      color: active ? '#FFFFFF' : '#86868B',
-                      transition: 'all 0.12s',
-                    }}
+                    className={`yele-btn ${active ? 'yele-btn-primary' : 'yele-btn-secondary'}`}
                   >
                     {cfg.icon}
                     {cfg.title}
@@ -619,17 +629,17 @@ export default function ClienteDetailPage() {
 
           {/* Section content cards */}
           {localSections.length === 0 ? (
-            <div style={{ ...S.card, textAlign: 'center' }} className="py-10">
-              <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
-                Activa secciones arriba para que el cliente pueda añadir contenido.
+            <div className="yele-card-quiet px-5 py-10 text-center">
+              <p className="text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>
+                Turn on sections above so the client can add content.
               </p>
             </div>
           ) : (
             localSections.map((sectionKey) => {
               const cfg = SECTION_CONFIG[sectionKey]
               if (!cfg) return (
-                <div key={sectionKey} style={S.card}>
-                  <p className="text-xs font-mono" style={{ color: '#86868B' }}>{sectionKey} — sin configuración</p>
+                <div key={sectionKey} className="yele-card-quiet p-5">
+                  <p className="yele-eyebrow">{sectionKey} — no configuration</p>
                 </div>
               )
               return (
@@ -649,21 +659,21 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
-      {/* ── MENSAJES TAB ── */}
+      {/* ── MESSAGES TAB ── */}
       {tab === 'mensajes' && (
         <div
-          className="max-w-2xl flex flex-col"
-          style={{ ...S.card, padding: 0, overflow: 'hidden', height: '520px' }}
+          className="yele-card-quiet max-w-2xl flex flex-col"
+          style={{ overflow: 'hidden', height: '520px' }}
         >
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: 0 }}>
             {msgsLoading ? (
               <div className="space-y-2">
-                {[1,2,3].map((i) => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: '#F5F5F7' }} />)}
+                {[1,2,3].map((i) => <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: '#F2F0EB' }} />)}
               </div>
             ) : messages.length === 0 ? (
               <div className="h-full flex items-center justify-center">
-                <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Sin mensajes aún.</p>
+                <p className="text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>No messages yet.</p>
               </div>
             ) : (
               messages.map((msg) => {
@@ -675,8 +685,8 @@ export default function ClienteDetailPage() {
                     <div
                       className="max-w-xs space-y-1"
                       style={{
-                        backgroundColor: isStudio ? '#1D1D1F' : '#F5F5F7',
-                        color: isStudio ? '#FFFFFF' : '#1D1D1F',
+                        backgroundColor: isStudio ? '#16161A' : '#F2F0EB',
+                        color: isStudio ? '#FFFFFF' : '#16161A',
                         borderRadius: isStudio ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                         padding: '10px 14px',
                         fontSize: '13px',
@@ -684,12 +694,12 @@ export default function ClienteDetailPage() {
                       }}
                     >
                       {!isStudio && (
-                        <p style={{ fontSize: '11px', fontWeight: 600, color: '#86868B', marginBottom: '2px' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: '#8A8A92', marginBottom: '2px' }}>
                           {senderName}
                         </p>
                       )}
                       <p style={{ lineHeight: '1.5' }}>{body}</p>
-                      <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '4px' }}>{formatDateTime(msg.created_at)}</p>
+                      <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '4px', fontFamily: 'var(--font-mono)' }}>{formatDateTime(msg.created_at)}</p>
                     </div>
                   </div>
                 )
@@ -700,34 +710,30 @@ export default function ClienteDetailPage() {
           {/* Reply form */}
           <div
             className="flex items-end gap-2 p-3"
-            style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+            style={{ borderTop: '1px solid rgba(22,22,26,0.06)' }}
           >
             <textarea
               value={replyInput}
               onChange={(e) => setReplyInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply() } }}
-              placeholder="Escribe un mensaje… (Enter para enviar)"
+              placeholder="Write a message… (Enter to send)"
               rows={2}
-              style={{ ...S.input, resize: 'none', flex: 1 }}
+              className="yele-textarea"
+              style={{ resize: 'none', flex: 1 }}
             />
             <button
               onClick={handleSendReply}
               disabled={!replyInput.trim() || replySending}
-              style={{
-                ...S.btnPrimary,
-                opacity: (!replyInput.trim() || replySending) ? 0.45 : 1,
-                paddingLeft: '14px',
-                paddingRight: '14px',
-              }}
+              className="yele-btn yele-btn-primary"
             >
               <Send size={13} />
-              {replySending ? 'Enviando…' : 'Enviar'}
+              {replySending ? 'Sending…' : 'Send'}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── DISEÑO TAB ── */}
+      {/* ── DESIGN TAB ── */}
       {tab === 'diseno' && (
         <div className="space-y-4 max-w-2xl">
 
@@ -735,153 +741,149 @@ export default function ClienteDetailPage() {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               {surveyCompleted ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(42,138,90,0.08)', color: '#2A8A5A', border: '1px solid rgba(42,138,90,0.2)', fontFamily: 'var(--font-instrument)' }}>
-                  <Check size={11} /> Enviado por el cliente
-                  {surveyAt && <span style={{ fontWeight: 400, color: '#86868B', marginLeft: '4px' }}>{formatDate(surveyAt)}</span>}
+                <span className="yele-pill"
+                  style={{ backgroundColor: 'rgba(31,122,85,0.10)', color: '#1F7A55', border: '1px solid rgba(31,122,85,0.2)' }}>
+                  <Check size={11} /> Submitted by client
+                  {surveyAt && <span className="yele-eyebrow" style={{ marginLeft: '4px' }}>{formatDate(surveyAt)}</span>}
                 </span>
               ) : (
-                <span className="text-xs px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: '#F5F5F7', color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
-                  Pendiente de envío
+                <span className="yele-pill"
+                  style={{ backgroundColor: '#F2F0EB', color: '#8A8A92' }}>
+                  Not submitted yet
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={downloadPDF}
-                className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#F5F5F7', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-instrument)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#EBEBED' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-              >
-                <FileDown size={13} /> Descargar PDF
+              <button onClick={downloadPDF} className="yele-btn yele-btn-secondary">
+                <FileDown size={13} /> Download PDF
               </button>
-              <button onClick={handleSaveSurvey} disabled={surveySaving} style={{ ...S.btnPrimary, opacity: surveySaving ? 0.6 : 1 }}>
+              <button onClick={handleSaveSurvey} disabled={surveySaving} className="yele-btn yele-btn-primary">
                 <Save size={13} />
-                {surveySaving ? 'Guardando…' : 'Guardar cambios'}
+                {surveySaving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </div>
 
-          {/* ── Block 1: Negocio ── */}
-          <SurveyCard title="Tu negocio">
-            <SurveyField label="Descripción del negocio">
+          {/* ── Block 1: Business ── */}
+          <SurveyCard title="Your business">
+            <SurveyField label="Business description">
               <SurveyTextarea value={survey['descripcion_negocio'] as string ?? ''} onChange={(v) => patchSurvey('descripcion_negocio', v)} rows={3} />
             </SurveyField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-              <SurveyField label="Cliente ideal">
+              <SurveyField label="Ideal client">
                 <SurveyTextarea value={survey['cliente_ideal'] as string ?? ''} onChange={(v) => patchSurvey('cliente_ideal', v)} rows={2} />
               </SurveyField>
-              <SurveyField label="Diferenciador">
+              <SurveyField label="What sets them apart">
                 <SurveyInput value={survey['diferenciador'] as string ?? ''} onChange={(v) => patchSurvey('diferenciador', v)} />
               </SurveyField>
             </div>
             <div style={{ marginTop: '12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
-                Servicios
+              <p className="yele-eyebrow" style={{ marginBottom: '8px' }}>
+                Services
               </p>
               {([1, 2, 3] as const).map((i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '8px', marginBottom: '6px' }}>
                   <SurveyInput
                     value={survey[`servicio_${i}_nombre`] as string ?? ''}
                     onChange={(v) => patchSurvey(`servicio_${i}_nombre`, v)}
-                    placeholder={`Servicio ${i}`}
+                    placeholder={`Service ${i}`}
                   />
                   <SurveyInput
                     value={survey[`servicio_${i}_precio`] as string ?? ''}
                     onChange={(v) => patchSurvey(`servicio_${i}_precio`, v)}
-                    placeholder="Precio"
+                    placeholder="Price"
                   />
                 </div>
               ))}
             </div>
           </SurveyCard>
 
-          {/* ── Block 2: Contenido ── */}
-          <SurveyCard title="Contenido real">
+          {/* ── Block 2: Content ── */}
+          <SurveyCard title="Real content">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <SurveyField label="Años de experiencia">
+              <SurveyField label="Years of experience">
                 <SurveyInput value={survey['anos_experiencia'] as string ?? ''} onChange={(v) => patchSurvey('anos_experiencia', v)} />
               </SurveyField>
-              <SurveyField label="Zona de cobertura">
+              <SurveyField label="Service area">
                 <SurveyInput value={survey['zona_cobertura'] as string ?? ''} onChange={(v) => patchSurvey('zona_cobertura', v)} />
               </SurveyField>
             </div>
-            <SurveyField label="Horario" style={{ marginTop: '12px' }}>
+            <SurveyField label="Opening hours" style={{ marginTop: '12px' }}>
               <SurveyInput value={survey['horario'] as string ?? ''} onChange={(v) => patchSurvey('horario', v)} />
             </SurveyField>
-            <SurveyField label="Historia del negocio" style={{ marginTop: '12px' }}>
+            <SurveyField label="Business story" style={{ marginTop: '12px' }}>
               <SurveyTextarea value={survey['historia'] as string ?? ''} onChange={(v) => patchSurvey('historia', v)} rows={3} />
             </SurveyField>
             <div style={{ marginTop: '12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
-                Testimonios
+              <p className="yele-eyebrow" style={{ marginBottom: '8px' }}>
+                Testimonials
               </p>
               {([1, 2, 3] as const).map((i) => (
-                <div key={i} style={{ backgroundColor: '#FAFAFA', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '8px', padding: '10px', marginBottom: '8px' }}>
+                <div key={i} style={{ backgroundColor: '#F7F6F3', border: '1px solid rgba(22,22,26,0.06)', borderRadius: '8px', padding: '10px', marginBottom: '8px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
-                    <SurveyInput value={survey[`testimonio_${i}_nombre`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_nombre`, v)} placeholder="Nombre" />
-                    <SurveyInput value={survey[`testimonio_${i}_ciudad`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_ciudad`, v)} placeholder="Ciudad" />
+                    <SurveyInput value={survey[`testimonio_${i}_nombre`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_nombre`, v)} placeholder="Name" />
+                    <SurveyInput value={survey[`testimonio_${i}_ciudad`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_ciudad`, v)} placeholder="City" />
                   </div>
-                  <SurveyTextarea value={survey[`testimonio_${i}_texto`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_texto`, v)} placeholder="Texto del testimonio…" rows={2} />
+                  <SurveyTextarea value={survey[`testimonio_${i}_texto`] as string ?? ''} onChange={(v) => patchSurvey(`testimonio_${i}_texto`, v)} placeholder="Testimonial text…" rows={2} />
                 </div>
               ))}
             </div>
           </SurveyCard>
 
-          {/* ── Block 3: Identidad visual ── */}
-          <SurveyCard title="Identidad visual">
+          {/* ── Block 3: Visual identity ── */}
+          <SurveyCard title="Visual identity">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <SurveyField label="Logo">
+                {/* option values ('si', 'no', 'en_proceso', …) are stored in Supabase — labels only are English */}
                 <SurveyPills
-                  options={[{ value: 'si', label: 'Sí lo tiene' }, { value: 'no', label: 'No tiene' }, { value: 'en_proceso', label: 'En proceso' }]}
+                  options={[{ value: 'si', label: 'Has one' }, { value: 'no', label: 'None' }, { value: 'en_proceso', label: 'In progress' }]}
                   value={survey['tiene_logo'] as string ?? ''}
                   onChange={(v) => patchSurvey('tiene_logo', v)}
                 />
               </SurveyField>
-              <SurveyField label="Fotos">
+              <SurveyField label="Photos">
                 <SurveyPills
-                  options={[{ value: 'si', label: 'Sí tiene' }, { value: 'no', label: 'No tiene' }, { value: 'pronto', label: 'Pronto' }]}
+                  options={[{ value: 'si', label: 'Has photos' }, { value: 'no', label: 'None' }, { value: 'pronto', label: 'Coming soon' }]}
                   value={survey['tiene_fotos'] as string ?? ''}
                   onChange={(v) => patchSurvey('tiene_fotos', v)}
                 />
               </SurveyField>
             </div>
             {(survey['logo_url'] || (survey['fotos_urls'] as string[] ?? []).length > 0) && (
-              <div style={{ marginTop: '10px', padding: '10px 12px', backgroundColor: '#F5F5F7', borderRadius: '8px', fontSize: '12px', color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
-                {survey['logo_url'] && <p style={{ margin: '0 0 4px' }}>Logo: <a href={survey['logo_url'] as string} target="_blank" rel="noreferrer" style={{ color: '#1D1D1F' }}>ver archivo</a></p>}
-                {(survey['fotos_urls'] as string[] ?? []).length > 0 && <p style={{ margin: 0 }}>{(survey['fotos_urls'] as string[]).length} foto(s) subida(s)</p>}
+              <div className="yele-card-quiet" style={{ marginTop: '10px', padding: '10px 12px', fontSize: '12px', color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>
+                {survey['logo_url'] && <p style={{ margin: '0 0 4px' }}>Logo: <a href={survey['logo_url'] as string} target="_blank" rel="noreferrer" style={{ color: '#16161A' }}>view file</a></p>}
+                {(survey['fotos_urls'] as string[] ?? []).length > 0 && <p style={{ margin: 0 }}>{(survey['fotos_urls'] as string[]).length} photo(s) uploaded</p>}
               </div>
             )}
-            <SurveyField label="Estilo visual" style={{ marginTop: '12px' }}>
+            <SurveyField label="Visual style" style={{ marginTop: '12px' }}>
               <SurveyPills
                 options={[
-                  { value: 'elegante',   label: 'Elegante' },
-                  { value: 'calido',     label: 'Cálido' },
-                  { value: 'moderno',    label: 'Moderno' },
-                  { value: 'artesanal',  label: 'Artesanal' },
-                  { value: 'atrevido',   label: 'Atrevido' },
-                  { value: 'escogenos',  label: '✦ Escoge tú' },
+                  { value: 'elegante',   label: 'Elegant' },
+                  { value: 'calido',     label: 'Warm' },
+                  { value: 'moderno',    label: 'Modern' },
+                  { value: 'artesanal',  label: 'Handcrafted' },
+                  { value: 'atrevido',   label: 'Bold' },
+                  { value: 'escogenos',  label: '✦ You choose' },
                 ]}
                 value={survey['estilo_visual'] as string ?? ''}
                 onChange={(v) => patchSurvey('estilo_visual', v)}
               />
             </SurveyField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-              <SurveyField label="Referencias (URLs)">
+              <SurveyField label="Reference sites (URLs)">
                 <SurveyTextarea value={survey['referencias_urls'] as string ?? ''} onChange={(v) => patchSurvey('referencias_urls', v)} rows={2} />
               </SurveyField>
-              <SurveyField label="Colores de marca">
+              <SurveyField label="Brand colors">
                 <SurveyInput value={survey['colores_marca'] as string ?? ''} onChange={(v) => patchSurvey('colores_marca', v)} />
               </SurveyField>
             </div>
           </SurveyCard>
 
-          {/* ── Block 4: La web ── */}
-          <SurveyCard title="La web">
-            <SurveyField label="Páginas seleccionadas">
+          {/* ── Block 4: The website ── */}
+          <SurveyCard title="The website">
+            <SurveyField label="Selected pages">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                {/* page keys below are stored in Supabase — PAGE_LABELS supplies the English display text */}
                 {['inicio','servicios','sobre_mi','galeria','blog','precios','contacto','reservas','tienda','otro'].map((p) => {
                   const pages = (survey['paginas'] as string[]) ?? []
                   const locked = p === 'inicio'
@@ -892,54 +894,54 @@ export default function ClienteDetailPage() {
                         const updated = pages.includes(p) ? pages.filter((x) => x !== p) : [...pages, p]
                         patchSurvey('paginas', updated)
                       }}
+                      className="yele-pill"
                       style={{
-                        padding: '5px 12px', borderRadius: '6px', fontSize: '12px', cursor: locked ? 'default' : 'pointer',
-                        fontFamily: 'var(--font-instrument)',
-                        border: `1px solid ${selected ? '#E8A020' : 'rgba(0,0,0,0.08)'}`,
-                        backgroundColor: selected ? 'rgba(232,160,32,0.08)' : 'transparent',
-                        color: selected ? '#E8A020' : '#86868B',
+                        cursor: locked ? 'default' : 'pointer',
+                        border: `1px solid ${selected ? '#D46FC8' : 'rgba(22,22,26,0.08)'}`,
+                        backgroundColor: selected ? 'rgba(212,111,200,0.12)' : 'transparent',
+                        color: selected ? '#D46FC8' : '#8A8A92',
                       }}
                     >
                       {selected && !locked && <Check size={10} style={{ display: 'inline', marginRight: 4 }} />}
-                      {p.replace('_', ' ')}
+                      {PAGE_LABELS[p] ?? p.replace('_', ' ')}
                     </button>
                   )
                 })}
               </div>
             </SurveyField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-              <SurveyField label="Tipo de contacto">
+              <SurveyField label="Contact type">
                 <SurveyPills
-                  options={[{ value: 'formulario', label: 'Formulario' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'ambos', label: 'Ambos' }, { value: 'no', label: 'No' }]}
+                  options={[{ value: 'formulario', label: 'Form' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'ambos', label: 'Both' }, { value: 'no', label: 'None' }]}
                   value={survey['contacto_tipo'] as string ?? ''}
                   onChange={(v) => patchSurvey('contacto_tipo', v)}
                 />
               </SurveyField>
-              <SurveyField label="Dominio">
+              <SurveyField label="Domain">
                 <SurveyPills
-                  options={[{ value: 'si', label: 'Tiene dominio' }, { value: 'no', label: 'Necesita uno' }]}
+                  options={[{ value: 'si', label: 'Has a domain' }, { value: 'no', label: 'Needs one' }]}
                   value={survey['tiene_dominio'] as string ?? ''}
                   onChange={(v) => patchSurvey('tiene_dominio', v)}
                 />
                 {survey['tiene_dominio'] === 'si' && (
                   <div style={{ marginTop: '6px' }}>
-                    <SurveyInput value={survey['dominio_actual'] as string ?? ''} onChange={(v) => patchSurvey('dominio_actual', v)} placeholder="ej. minegocio.es" />
+                    <SurveyInput value={survey['dominio_actual'] as string ?? ''} onChange={(v) => patchSurvey('dominio_actual', v)} placeholder="e.g. mybusiness.com" />
                   </div>
                 )}
               </SurveyField>
             </div>
-            <SurveyField label="Extras / funcionalidades especiales" style={{ marginTop: '12px' }}>
+            <SurveyField label="Extras / special features" style={{ marginTop: '12px' }}>
               <SurveyTextarea value={survey['extras'] as string ?? ''} onChange={(v) => patchSurvey('extras', v)} rows={2} />
             </SurveyField>
           </SurveyCard>
 
-          {/* ── Block 5: Contacto y redes ── */}
-          <SurveyCard title="Contacto y redes">
+          {/* ── Block 5: Contact and social ── */}
+          <SurveyCard title="Contact and social">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <SurveyField label="Teléfono"><SurveyInput value={survey['telefono'] as string ?? ''} onChange={(v) => patchSurvey('telefono', v)} /></SurveyField>
-              <SurveyField label="Email de contacto"><SurveyInput value={survey['email_contacto'] as string ?? ''} onChange={(v) => patchSurvey('email_contacto', v)} /></SurveyField>
+              <SurveyField label="Phone"><SurveyInput value={survey['telefono'] as string ?? ''} onChange={(v) => patchSurvey('telefono', v)} /></SurveyField>
+              <SurveyField label="Contact email"><SurveyInput value={survey['email_contacto'] as string ?? ''} onChange={(v) => patchSurvey('email_contacto', v)} /></SurveyField>
               <SurveyField label="WhatsApp"><SurveyInput value={survey['whatsapp'] as string ?? ''} onChange={(v) => patchSurvey('whatsapp', v)} /></SurveyField>
-              <SurveyField label="Dirección"><SurveyInput value={survey['direccion'] as string ?? ''} onChange={(v) => patchSurvey('direccion', v)} /></SurveyField>
+              <SurveyField label="Address"><SurveyInput value={survey['direccion'] as string ?? ''} onChange={(v) => patchSurvey('direccion', v)} /></SurveyField>
               <SurveyField label="Instagram"><SurveyInput value={survey['instagram'] as string ?? ''} onChange={(v) => patchSurvey('instagram', v)} /></SurveyField>
               <SurveyField label="Facebook"><SurveyInput value={survey['facebook'] as string ?? ''} onChange={(v) => patchSurvey('facebook', v)} /></SurveyField>
             </div>
@@ -950,9 +952,9 @@ export default function ClienteDetailPage() {
 
           {/* Bottom save */}
           <div className="flex justify-end pb-8">
-            <button onClick={handleSaveSurvey} disabled={surveySaving} style={{ ...S.btnPrimary, opacity: surveySaving ? 0.6 : 1 }}>
+            <button onClick={handleSaveSurvey} disabled={surveySaving} className="yele-btn yele-btn-primary">
               <Save size={13} />
-              {surveySaving ? 'Guardando…' : 'Guardar cambios'}
+              {surveySaving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </div>
@@ -963,9 +965,9 @@ export default function ClienteDetailPage() {
         <div
           className="fixed bottom-5 right-5 px-4 py-3 rounded-xl text-sm font-medium z-50"
           style={{
-            backgroundColor: toast.ok ? 'rgba(6,95,70,0.08)' : 'rgba(153,27,27,0.08)',
-            border: `1px solid ${toast.ok ? 'rgba(6,95,70,0.2)' : 'rgba(153,27,27,0.2)'}`,
-            color: toast.ok ? '#065f46' : '#991b1b',
+            backgroundColor: toast.ok ? 'rgba(31,122,85,0.08)' : 'rgba(153,27,27,0.08)',
+            border: `1px solid ${toast.ok ? 'rgba(31,122,85,0.2)' : 'rgba(153,27,27,0.2)'}`,
+            color: toast.ok ? '#1F7A55' : '#B3382B',
             fontFamily: 'var(--font-instrument)',
           }}
         >
@@ -980,8 +982,8 @@ export default function ClienteDetailPage() {
 
 function SurveyCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' }}>
-      <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#1D1D1F', marginBottom: '14px', fontFamily: 'var(--font-outfit)' }}>
+    <div className="yele-card-quiet" style={{ padding: '20px' }}>
+      <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#16161A', marginBottom: '14px', fontFamily: 'var(--font-display)' }}>
         {title}
       </h3>
       {children}
@@ -992,7 +994,7 @@ function SurveyCard({ title, children }: { title: string; children: React.ReactN
 function SurveyField({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={style}>
-      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#86868B', marginBottom: '5px', fontFamily: 'var(--font-instrument)' }}>
+      <label className="yele-label">
         {label}
       </label>
       {children}
@@ -1006,9 +1008,7 @@ function SurveyInput({ value, onChange, placeholder }: { value: string; onChange
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '7px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' }}
-      onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+      className="yele-input"
     />
   )
 }
@@ -1020,9 +1020,8 @@ function SurveyTextarea({ value, onChange, placeholder, rows = 3 }: { value: str
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '7px 10px', fontSize: '13px', outline: 'none', width: '100%', resize: 'vertical', fontFamily: 'var(--font-instrument)' }}
-      onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+      className="yele-textarea"
+      style={{ resize: 'vertical' }}
     />
   )
 }
@@ -1034,12 +1033,12 @@ function SurveyPills({ options, value, onChange }: { options: { value: string; l
         const sel = value === opt.value
         return (
           <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
+            className="yele-pill"
             style={{
-              padding: '5px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
-              fontFamily: 'var(--font-instrument)',
-              border: `1px solid ${sel ? '#E8A020' : 'rgba(0,0,0,0.08)'}`,
-              backgroundColor: sel ? 'rgba(232,160,32,0.08)' : '#FFFFFF',
-              color: sel ? '#E8A020' : '#86868B',
+              cursor: 'pointer',
+              border: `1px solid ${sel ? '#D46FC8' : 'rgba(22,22,26,0.08)'}`,
+              backgroundColor: sel ? 'rgba(212,111,200,0.12)' : '#FFFFFF',
+              color: sel ? '#D46FC8' : '#8A8A92',
               transition: 'all 0.12s',
             }}
           >

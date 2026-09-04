@@ -1,41 +1,29 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, DM_Sans, DM_Mono, Outfit, Instrument_Sans } from "next/font/google";
+import { Archivo, Instrument_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
 
-const dmSerifDisplay = DM_Serif_Display({
-  variable: "--font-dm-serif",
-  subsets: ["latin"],
-  weight: "400",
-});
-
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const dmMono = DM_Mono({
-  variable: "--font-dm-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
 const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
+  variable: "--font-instrument-face",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
 
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
 export const metadata: Metadata = {
-  title: "Yele — Panel de cliente",
-  description: "Gestiona tu presencia web con Yele",
+  title: "Yele — Client dashboard",
+  description: "Manage your website, content and messages with Yele.",
 };
 
 export default function RootLayout({
@@ -45,8 +33,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="es"
-      className={`${dmSerifDisplay.variable} ${dmSans.variable} ${dmMono.variable} ${outfit.variable} ${instrumentSans.variable} h-full`}
+      lang="en"
+      className={`${archivo.variable} ${instrumentSans.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full">
         <ToastProvider>{children}</ToastProvider>

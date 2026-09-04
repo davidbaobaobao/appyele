@@ -34,19 +34,19 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
 
   const TOAST_STYLES: Record<ToastType, { bg: string; border: string; color: string }> = {
     success: {
-      bg: 'rgba(42,138,90,0.15)',
-      border: 'rgba(42,138,90,0.4)',
-      color: '#2A8A5A',
+      bg: 'rgba(31,122,85,0.10)',
+      border: 'rgba(31,122,85,0.28)',
+      color: '#1F7A55',
     },
     error: {
-      bg: 'rgba(196,58,42,0.15)',
-      border: 'rgba(196,58,42,0.4)',
-      color: '#C43A2A',
+      bg: 'rgba(179,56,43,0.09)',
+      border: 'rgba(179,56,43,0.28)',
+      color: '#B3382B',
     },
     info: {
-      bg: 'rgba(232,160,32,0.15)',
-      border: 'rgba(232,160,32,0.4)',
-      color: '#E8A020',
+      bg: 'rgba(212,111,200,0.12)',
+      border: 'rgba(212,111,200,0.32)',
+      color: '#D46FC8',
     },
   }
 
@@ -64,12 +64,15 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 40 }}
                 transition={{ duration: 0.2 }}
-                className="px-4 py-3 rounded-xl text-sm font-medium shadow-lg pointer-events-auto"
+                className="px-4 py-3 text-sm font-medium shadow-lg pointer-events-auto"
                 style={{
                   backgroundColor: style.bg,
                   border: `1px solid ${style.border}`,
                   color: style.color,
                   minWidth: '220px',
+                  borderRadius: '14px',
+                  backdropFilter: 'blur(8px)',
+                  fontFamily: 'var(--font-instrument)',
                 }}
               >
                 {toast.message}

@@ -7,6 +7,11 @@ const NOTIFY_TO = ['davidbaobaobao@gmail.com', 'info@yele.design']
 // Domain yele.design must be verified in Resend dashboard → Domains for this to work.
 const FROM = 'Yele Studio <info@yele.design>'
 
+// Websafe stacks only — mail clients cannot load web fonts, so Archivo is a
+// progressive enhancement and Helvetica/Arial is what most recipients will see.
+const HEADING_FONT = "Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif"
+const BODY_FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
+
 export async function sendNewMessageNotification({
   clientName,
   clientEmail,
@@ -24,19 +29,63 @@ export async function sendNewMessageNotification({
   await resend.emails.send({
     from: FROM,
     to: NOTIFY_TO,
-    subject: `Nuevo mensaje de ${clientName}`,
+    subject: `New message from ${clientName}`,
     html: `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff;">
-        <p style="font-size:13px;color:#86868B;margin:0 0 24px;">Yele Studio · nuevo mensaje</p>
-        <h2 style="font-size:20px;font-weight:600;color:#1D1D1F;margin:0 0 4px;">${clientName}</h2>
-        ${clientEmail ? `<p style="font-size:13px;color:#86868B;margin:0 0 20px;">${clientEmail}</p>` : '<div style="margin-bottom:20px;"></div>'}
-        <div style="background:#F5F5F7;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
-          <p style="font-size:15px;color:#1D1D1F;margin:0;line-height:1.5;">${escapeHtml(message)}</p>
-        </div>
-        <a href="${threadUrl}" style="display:inline-block;background:#1D1D1F;color:#ffffff;padding:12px 22px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:500;">
-          Ver conversación &rarr;
-        </a>
-      </div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0;padding:0;background:#F7F6F3;">
+  <tr>
+    <td align="center" style="padding:32px 16px;background:#F7F6F3;">
+
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;background:#FFFFFF;border-radius:16px;">
+        <tr>
+          <td style="padding:32px 28px;">
+
+            <p style="margin:0 0 20px;font-family:${BODY_FONT};font-size:12px;line-height:1.4;letter-spacing:0.08em;text-transform:uppercase;color:#8A8A92;">
+              Yele Studio <span style="color:#D46FC8;">&middot;</span> New message
+            </p>
+
+            <h1 style="margin:0 0 4px;font-family:${HEADING_FONT};font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-0.01em;color:#16161A;">
+              ${escapeHtml(clientName)}
+            </h1>
+
+            ${
+              clientEmail
+                ? `<p style="margin:0 0 22px;font-family:${BODY_FONT};font-size:13px;line-height:1.5;color:#8A8A92;">${escapeHtml(clientEmail)}</p>`
+                : `<p style="margin:0 0 22px;font-size:1px;line-height:1px;">&nbsp;</p>`
+            }
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#F2F0EB;border-radius:12px;">
+              <tr>
+                <td style="padding:16px 20px;font-family:${BODY_FONT};font-size:15px;line-height:1.55;color:#16161A;">
+                  ${escapeHtml(message).replace(/\n/g, '<br>')}
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0;">
+              <tr>
+                <td align="center" style="background:#1A1A1F;border-radius:9999px;">
+                  <a href="${threadUrl}" style="display:inline-block;padding:13px 26px;font-family:${BODY_FONT};font-size:14px;line-height:1;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:9999px;">
+                    View conversation &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+      </table>
+
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
+        <tr>
+          <td align="center" style="padding:18px 28px 0;font-family:${BODY_FONT};font-size:11px;line-height:1.5;color:#8A8A92;">
+            Yele Studio <span style="color:#D46FC8;">&middot;</span> app.yele.design
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
     `,
   })
 }

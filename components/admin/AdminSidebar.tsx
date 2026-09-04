@@ -7,9 +7,9 @@ import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback } from 'react'
 
 const NAV_ITEMS = [
-  { label: 'Clientes',  href: '/admin/clientes',  icon: Users },
-  { label: 'Mensajes',  href: '/admin/mensajes',  icon: MessageSquare },
-  { label: 'Contenido', href: '/admin/contenido', icon: LayoutGrid },
+  { label: 'Clients',  href: '/admin/clientes',  icon: Users },
+  { label: 'Messages', href: '/admin/mensajes',  icon: MessageSquare },
+  { label: 'Content',  href: '/admin/contenido', icon: LayoutGrid },
 ]
 
 function isNavActive(href: string, pathname: string) {
@@ -52,63 +52,50 @@ export default function AdminSidebar() {
   return (
     <aside
       className="fixed left-0 top-0 h-full flex flex-col z-40"
-      style={{ width: '240px', backgroundColor: '#F5F5F7', borderRight: '1px solid rgba(0,0,0,0.08)' }}
+      style={{ width: '240px', backgroundColor: '#F2F0EB', borderRight: '1px solid rgba(22,22,26,0.08)' }}
     >
-      {/* Logo */}
+      {/* Logo + section label */}
       <div className="px-5 pt-6 pb-4">
-        <div
-          className="text-xl font-semibold mb-0.5"
-          style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
-        >
-          Yele
+        <div className="flex items-center gap-2 mb-1">
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#16161A' }}
+            aria-hidden
+          >
+            <span className="block w-2 h-2 rounded-full" style={{ backgroundColor: '#D46FC8' }} />
+          </span>
+          <span
+            className="text-xl font-semibold leading-none"
+            style={{ fontFamily: 'var(--font-display)', color: '#16161A', letterSpacing: '-0.02em' }}
+          >
+            yele
+          </span>
         </div>
-        <div
-          className="text-xs font-semibold uppercase tracking-widest"
-          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-        >
-          Admin
-        </div>
+        <span className="yele-eyebrow">Admin</span>
       </div>
 
-      <div style={{ height: '1px', backgroundColor: 'rgba(0,0,0,0.08)', margin: '0 20px' }} />
+      <div style={{ height: '1px', backgroundColor: 'rgba(22,22,26,0.08)', margin: '0 20px' }} />
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map((item) => {
-          const Icon      = item.icon
-          const isActive  = isNavActive(item.href, pathname)
-          const isMensajes = item.href === '/admin/mensajes'
+          const Icon       = item.icon
+          const isActive   = isNavActive(item.href, pathname)
+          const isMessages = item.href === '/admin/mensajes'
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-              style={{
-                fontFamily: 'var(--font-instrument)',
-                fontWeight: isActive ? 500 : 400,
-                color: isActive ? '#1D1D1F' : '#86868B',
-                backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = '#1D1D1F'
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = '#86868B'
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }
-              }}
+              className="yele-nav-item relative"
+              data-active={isActive}
             >
               <Icon size={16} strokeWidth={1.75} />
               <span>{item.label}</span>
-              {isMensajes && unreadCount > 0 && (
+              {isMessages && unreadCount > 0 && (
                 <span
-                  className="ml-auto text-xs font-semibold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
-                  style={{ backgroundColor: '#C8A97E', color: '#FFFFFF' }}
+                  className="ml-auto text-[11px] font-semibold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+                  style={{ backgroundColor: '#D46FC8', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
                 >
                   {unreadCount}
                 </span>
@@ -121,40 +108,16 @@ export default function AdminSidebar() {
       {/* Bottom actions */}
       <div
         className="px-3 pb-6 space-y-0.5"
-        style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px' }}
+        style={{ borderTop: '1px solid rgba(22,22,26,0.08)', paddingTop: '12px' }}
       >
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
-          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#1D1D1F'
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#86868B'
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
-        >
+        <Link href="/dashboard" className="yele-nav-item w-full">
           <LayoutDashboard size={16} strokeWidth={1.75} />
-          <span>Ver como cliente</span>
+          <span>View as client</span>
         </Link>
 
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
-          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#1D1D1F'
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#86868B'
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
-        >
+        <button onClick={handleSignOut} className="yele-nav-item w-full">
           <LogOut size={16} strokeWidth={1.75} />
-          <span>Cerrar sesión</span>
+          <span>Sign out</span>
         </button>
       </div>
     </aside>

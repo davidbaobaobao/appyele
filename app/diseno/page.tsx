@@ -69,39 +69,24 @@ const REQUIRED_FIELDS: (keyof Survey)[] = [
 
 // ─── CSS tokens (light theme) ─────────────────────────────────────────────────
 
-const AMBER  = '#E8A020'
-const MIST   = '#86868B'
-const INK    = '#1D1D1F'
-const BORDER = 'rgba(0,0,0,0.08)'
-const BG_SUB = '#FAFAFA'
+const AMBER  = '#D46FC8'
+const MIST   = '#8A8A92'
+const INK    = '#16161A'
+const BORDER = 'rgba(22,22,26,0.08)'
 const BG_CARD = '#FFFFFF'
-const GREEN  = '#2A8A5A'
+const GREEN  = '#1F7A55'
+const HINT   = 'rgba(22,22,26,0.45)'
 
 // ─── Reusable primitives ──────────────────────────────────────────────────────
-
-function inputStyle(focused?: boolean): React.CSSProperties {
-  return {
-    width: '100%', boxSizing: 'border-box',
-    backgroundColor: '#F5F5F7',
-    border: `1px solid ${focused ? AMBER : BORDER}`,
-    borderRadius: '8px', color: INK, fontSize: '14px',
-    padding: '10px 14px', outline: 'none',
-    fontFamily: 'var(--font-instrument)',
-    transition: 'border-color 0.15s',
-  }
-}
 
 function FocusInput({ value, onChange, placeholder, type = 'text' }: {
   value: string; onChange: (v: string) => void; placeholder?: string; type?: string
 }) {
-  const [focused, setFocused] = useState(false)
   return (
     <input
       type={type} value={value} placeholder={placeholder}
-      style={inputStyle(focused)}
+      className="yele-input"
       onChange={(e) => onChange(e.target.value)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
     />
   )
 }
@@ -109,14 +94,12 @@ function FocusInput({ value, onChange, placeholder, type = 'text' }: {
 function FocusTextarea({ value, onChange, placeholder, rows = 3 }: {
   value: string; onChange: (v: string) => void; placeholder?: string; rows?: number
 }) {
-  const [focused, setFocused] = useState(false)
   return (
     <textarea
       value={value} placeholder={placeholder} rows={rows}
-      style={{ ...inputStyle(focused), resize: 'vertical' }}
+      className="yele-textarea"
+      style={{ resize: 'vertical' }}
       onChange={(e) => onChange(e.target.value)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
     />
   )
 }
@@ -126,16 +109,12 @@ function Field({ label, hint, required, children }: {
 }) {
   return (
     <div style={{ marginTop: '20px' }}>
-      <label style={{
-        display: 'block', fontSize: '11px', fontWeight: 600,
-        letterSpacing: '0.06em', textTransform: 'uppercase' as const,
-        color: MIST, marginBottom: '6px', fontFamily: 'var(--font-instrument)',
-      }}>
+      <label className="yele-label">
         {label}{required && <span style={{ color: AMBER, marginLeft: '2px' }}>*</span>}
       </label>
       {children}
       {hint && (
-        <p style={{ fontSize: '11px', color: '#C7C7CC', marginTop: '4px', fontFamily: 'var(--font-instrument)' }}>
+        <p style={{ fontSize: '12px', color: HINT, marginTop: '5px', fontFamily: 'var(--font-instrument)' }}>
           {hint}
         </p>
       )}
@@ -147,14 +126,7 @@ function PillButton({ label, selected, onClick }: { label: string; selected: boo
   return (
     <button
       type="button" onClick={onClick}
-      style={{
-        padding: '8px 16px', borderRadius: '6px', cursor: 'pointer',
-        border: `1px solid ${selected ? AMBER : BORDER}`,
-        backgroundColor: selected ? 'rgba(232,160,32,0.08)' : 'transparent',
-        color: selected ? AMBER : MIST,
-        fontSize: '13px', fontFamily: 'var(--font-instrument)',
-        transition: 'all 0.15s',
-      }}
+      className={`yele-btn ${selected ? 'yele-btn-accent' : 'yele-btn-secondary'}`}
     >
       {label}
     </button>
@@ -166,11 +138,15 @@ function CollapsibleBlock({ number, title, subtitle, isOpen, onToggle, isComplet
   isOpen: boolean; onToggle: () => void; isComplete: boolean; children: React.ReactNode
 }) {
   return (
-    <div style={{
-      border: `1px solid ${isComplete ? 'rgba(42,138,90,0.25)' : BORDER}`,
-      borderRadius: '12px', marginBottom: '10px', overflow: 'hidden',
-      backgroundColor: BG_CARD,
-    }}>
+    <div
+      className="yele-card"
+      style={{
+        marginBottom: '10px', overflow: 'hidden',
+        boxShadow: isComplete
+          ? '0 0 0 1px rgba(31,122,85,0.28), 0 10px 32px rgba(22,22,26,0.05)'
+          : undefined,
+      }}
+    >
       <button
         type="button" onClick={onToggle}
         style={{
@@ -182,14 +158,17 @@ function CollapsibleBlock({ number, title, subtitle, isOpen, onToggle, isComplet
         <div style={{
           width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backgroundColor: isComplete ? 'rgba(42,138,90,0.1)' : 'rgba(232,160,32,0.1)',
+          backgroundColor: isComplete ? 'rgba(31,122,85,0.10)' : 'rgba(212,111,200,0.10)',
           color: isComplete ? GREEN : AMBER,
           fontSize: isComplete ? '13px' : '12px', fontWeight: 700,
         }}>
           {isComplete ? <Check size={14} strokeWidth={2.5} /> : number}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '15px', fontWeight: 600, color: INK, fontFamily: 'var(--font-outfit)' }}>
+          <div className="yele-eyebrow" style={{ marginBottom: '6px' }}>
+            Step {number} of 5
+          </div>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: INK, fontFamily: 'var(--font-display)' }}>
             {title}
           </div>
           <div style={{ fontSize: '12px', color: MIST, marginTop: '2px', fontFamily: 'var(--font-instrument)' }}>
@@ -337,12 +316,12 @@ export default function DisenoPagina() {
       <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
         <Sidebar />
         <main className="flex-1 flex flex-col dashboard-main">
-          <TopBar title="Diseño" />
+          <TopBar title="Design" />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <Palette size={32} style={{ color: '#D1D1D6', margin: '0 auto 12px' }} />
+              <Palette size={32} style={{ color: 'rgba(22,22,26,0.25)', margin: '0 auto 12px' }} />
               <p style={{ fontFamily: 'var(--font-instrument)', color: MIST, fontSize: '14px' }}>
-                Esta sección estará disponible cuando tu proyecto esté en fase de diseño.
+                This section opens once your project reaches the design phase.
               </p>
             </div>
           </div>
@@ -358,21 +337,21 @@ export default function DisenoPagina() {
       <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
         <Sidebar />
         <main className="flex-1 flex flex-col dashboard-main">
-          <TopBar title="Diseño" />
+          <TopBar title="Design" />
           <div className="flex-1 flex items-center justify-center px-6">
             <div style={{ textAlign: 'center', maxWidth: '420px' }}>
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
-                backgroundColor: 'rgba(42,138,90,0.1)', margin: '0 auto 20px',
+                backgroundColor: 'rgba(31,122,85,0.10)', margin: '0 auto 20px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Check size={28} style={{ color: GREEN }} strokeWidth={2.5} />
               </div>
-              <h2 style={{ fontFamily: 'var(--font-outfit)', fontSize: '24px', fontWeight: 700, color: INK, marginBottom: '12px' }}>
-                Briefing enviado
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 700, color: INK, marginBottom: '12px' }}>
+                Brief sent
               </h2>
               <p style={{ fontFamily: 'var(--font-instrument)', color: MIST, fontSize: '14px', lineHeight: 1.65 }}>
-                Hemos recibido toda la información. Te contactaremos en menos de 24 horas para confirmar los detalles y empezar con el diseño.
+                We have everything we need. Expect a message within 24 hours to confirm the details and start the design.
               </p>
             </div>
           </div>
@@ -387,13 +366,13 @@ export default function DisenoPagina() {
     <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
       <Sidebar />
       <main className="flex-1 flex flex-col dashboard-main" style={{ height: '100vh' }}>
-        <TopBar title="Diseño" />
+        <TopBar title="Design" />
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="space-y-3 animate-pulse w-full max-w-2xl mx-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 rounded-xl" style={{ backgroundColor: '#F5F5F7' }} />
+                <div key={i} className="h-16 rounded-xl" style={{ backgroundColor: '#F2F0EB' }} />
               ))}
             </div>
           </div>
@@ -403,143 +382,143 @@ export default function DisenoPagina() {
 
               {/* Header */}
               <div style={{ marginBottom: '28px' }}>
-                <h1 style={{ fontFamily: 'var(--font-outfit)', fontSize: '26px', fontWeight: 700, color: INK, margin: '0 0 6px' }}>
-                  Diseño de tu web
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 700, color: INK, margin: '0 0 6px' }}>
+                  Your website design
                 </h1>
                 <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '14px', color: MIST, margin: 0 }}>
-                  Completa este briefing para que podamos diseñar tu web exactamente como quieres.
+                  Fill in this brief so we can design your site exactly the way you want it.
                 </p>
               </div>
 
               {/* Progress bar */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', color: MIST }}>
-                    Progreso del briefing
+                  <span className="yele-eyebrow">
+                    Brief progress
                   </span>
-                  <span style={{ fontFamily: 'var(--font-instrument)', fontSize: '13px', fontWeight: 600, color: progress === 100 ? GREEN : MIST }}>
-                    {progress}% completado
+                  <span className="yele-eyebrow" style={{ color: progress === 100 ? GREEN : undefined }}>
+                    {progress}% complete
                   </span>
                 </div>
-                <div style={{ height: '6px', backgroundColor: '#F5F5F7', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '6px', backgroundColor: '#F2F0EB', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: '3px', backgroundColor: AMBER, width: `${progress}%`, transition: 'width 0.4s ease' }} />
                 </div>
                 {saving && (
-                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: '#C7C7CC', marginTop: '6px' }}>
-                    Guardando…
+                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: HINT, marginTop: '6px' }}>
+                    Saving…
                   </p>
                 )}
                 {lastSaved && !saving && (
-                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: '#C7C7CC', marginTop: '6px' }}>
-                    ✓ Guardado automáticamente
+                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: HINT, marginTop: '6px' }}>
+                    ✓ Saved automatically
                   </p>
                 )}
               </div>
 
-              {/* ── BLOCK 1 — TU NEGOCIO ── */}
-              <CollapsibleBlock number={1} title="Tu negocio"
-                subtitle="Lo que necesitamos entender antes de diseñar"
+              {/* ── BLOCK 1 — YOUR BUSINESS ── */}
+              <CollapsibleBlock number={1} title="Your business"
+                subtitle="What we need to understand before we design"
                 isOpen={openBlock === 1} onToggle={() => setOpenBlock(openBlock === 1 ? 0 : 1)}
                 isComplete={block1Complete}
               >
-                <Field label="¿Cómo describes tu negocio?" required
-                  hint="1-2 frases. ej: Soy fontanero en Barcelona, especializado en urgencias.">
+                <Field label="How would you describe your business?" required
+                  hint="1-2 sentences. e.g. I am a plumber in Barcelona specializing in emergency callouts.">
                   <FocusTextarea value={survey.descripcion_negocio}
                     onChange={(v) => updateField('descripcion_negocio', v)}
-                    placeholder="Describe tu negocio en pocas palabras…" rows={3} />
+                    placeholder="Describe your business in a few words…" rows={3} />
                 </Field>
 
                 <div style={{ marginTop: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: MIST, marginBottom: '4px', fontFamily: 'var(--font-instrument)' }}>
-                    Servicios principales<span style={{ color: AMBER }}>*</span>
+                  <label className="yele-label" style={{ marginBottom: '2px' }}>
+                    Main services<span style={{ color: AMBER }}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#C7C7CC', marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
-                    Hasta 3 servicios. Añade el precio si quieres mostrarlo.
+                  <p style={{ fontSize: '12px', color: HINT, marginBottom: '8px', fontFamily: 'var(--font-instrument)' }}>
+                    Up to 3 services. Add a price if you want it shown.
                   </p>
                   {([1, 2, 3] as const).map((i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px', marginBottom: '8px' }}>
                       <FocusInput
                         value={survey[`servicio_${i}_nombre` as keyof Survey] as string}
                         onChange={(v) => updateField(`servicio_${i}_nombre` as keyof Survey, v)}
-                        placeholder={i === 1 ? 'ej. Reparación urgente' : i === 2 ? 'ej. Instalación de baños' : 'ej. Revisiones anuales'}
+                        placeholder={i === 1 ? 'e.g. Emergency repairs' : i === 2 ? 'e.g. Bathroom installation' : 'e.g. Annual servicing'}
                       />
                       <FocusInput
                         value={survey[`servicio_${i}_precio` as keyof Survey] as string}
                         onChange={(v) => updateField(`servicio_${i}_precio` as keyof Survey, v)}
-                        placeholder="ej. €60/h"
+                        placeholder="e.g. €60/hr"
                       />
                     </div>
                   ))}
                 </div>
 
-                <Field label="¿Quién es tu cliente ideal?" required
-                  hint="ej: Familias con vivienda propia que necesitan un fontanero de confianza.">
+                <Field label="Who is your ideal customer?" required
+                  hint="e.g. Homeowners looking for a plumber they can trust.">
                   <FocusTextarea value={survey.cliente_ideal}
                     onChange={(v) => updateField('cliente_ideal', v)}
-                    placeholder="Describe a tu cliente ideal…" rows={2} />
+                    placeholder="Describe your ideal customer…" rows={2} />
                 </Field>
 
-                <Field label="¿Qué te diferencia de tu competencia?" required
-                  hint="ej: Respondo en 2 horas y doy presupuesto gratuito.">
+                <Field label="What sets you apart from the competition?" required
+                  hint="e.g. I answer within 2 hours and quotes are free.">
                   <FocusInput value={survey.diferenciador}
                     onChange={(v) => updateField('diferenciador', v)}
-                    placeholder="Tu principal diferenciador…" />
+                    placeholder="What makes you different…" />
                 </Field>
               </CollapsibleBlock>
 
-              {/* ── BLOCK 2 — CONTENIDO REAL ── */}
-              <CollapsibleBlock number={2} title="Contenido real"
-                subtitle="Los textos e información que irán en tu web"
+              {/* ── BLOCK 2 — REAL CONTENT ── */}
+              <CollapsibleBlock number={2} title="Real content"
+                subtitle="The words and details that will go on your site"
                 isOpen={openBlock === 2} onToggle={() => setOpenBlock(openBlock === 2 ? 0 : 2)}
                 isComplete={block2Complete}
               >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
-                  <Field label="Años de experiencia">
+                  <Field label="Years of experience">
                     <FocusInput value={survey.anos_experiencia}
-                      onChange={(v) => updateField('anos_experiencia', v)} placeholder="ej. 12" />
+                      onChange={(v) => updateField('anos_experiencia', v)} placeholder="e.g. 12" />
                   </Field>
-                  <Field label="Zona de cobertura">
+                  <Field label="Service area">
                     <FocusInput value={survey.zona_cobertura}
-                      onChange={(v) => updateField('zona_cobertura', v)} placeholder="ej. Barcelona y área metropolitana" />
+                      onChange={(v) => updateField('zona_cobertura', v)} placeholder="e.g. Barcelona and surrounding area" />
                   </Field>
                 </div>
 
-                <Field label="Horario de atención" hint="ej. Lunes a viernes 8:00–20:00, sábados 9:00–14:00">
+                <Field label="Opening hours" hint="e.g. Monday to Friday 8:00-20:00, Saturday 9:00-14:00">
                   <FocusInput value={survey.horario}
-                    onChange={(v) => updateField('horario', v)} placeholder="Tus horarios de atención…" />
+                    onChange={(v) => updateField('horario', v)} placeholder="Your opening hours…" />
                 </Field>
 
-                <Field label="Historia del negocio (opcional)" hint="Cuéntanos cómo empezaste. Humaniza tu marca.">
+                <Field label="Your story (optional)" hint="Tell us how you started. It gives your brand a human face.">
                   <FocusTextarea value={survey.historia}
                     onChange={(v) => updateField('historia', v)}
-                    placeholder="Brevemente, ¿cómo y por qué empezaste este negocio?" rows={3} />
+                    placeholder="Briefly, how and why did you start this business?" rows={3} />
                 </Field>
 
                 <div style={{ marginTop: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: MIST, fontFamily: 'var(--font-instrument)' }}>
-                    Testimonios de clientes
+                  <label className="yele-label">
+                    Customer testimonials
                   </label>
-                  <p style={{ fontSize: '11px', color: '#C7C7CC', margin: '4px 0 12px', fontFamily: 'var(--font-instrument)' }}>
-                    Opcional. Si no tienes, los crearemos a partir de tu perfil.
+                  <p style={{ fontSize: '12px', color: HINT, margin: '2px 0 12px', fontFamily: 'var(--font-instrument)' }}>
+                    Optional. If you have none, we will draft them from your profile.
                   </p>
                   {([1, 2, 3] as const).map((i) => (
-                    <div key={i} style={{ backgroundColor: BG_SUB, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '14px', marginBottom: '8px' }}>
+                    <div key={i} className="yele-card-quiet" style={{ padding: '14px', marginBottom: '8px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                         <FocusInput
                           value={survey[`testimonio_${i}_nombre` as keyof Survey] as string}
                           onChange={(v) => updateField(`testimonio_${i}_nombre` as keyof Survey, v)}
-                          placeholder="Nombre del cliente"
+                          placeholder="Customer name"
                         />
                         <FocusInput
                           value={survey[`testimonio_${i}_ciudad` as keyof Survey] as string}
                           onChange={(v) => updateField(`testimonio_${i}_ciudad` as keyof Survey, v)}
-                          placeholder="Ciudad"
+                          placeholder="City"
                         />
                       </div>
                       <FocusTextarea
                         value={survey[`testimonio_${i}_texto` as keyof Survey] as string}
                         onChange={(v) => updateField(`testimonio_${i}_texto` as keyof Survey, v)}
-                        placeholder={`"${i === 1 ? 'Excelente servicio, muy profesional y rápido.' : i === 2 ? 'Lo recomiendo a todos mis conocidos.' : 'Resolvió el problema en menos de una hora.'}"`}
+                        placeholder={`"${i === 1 ? 'Great service, professional and fast.' : i === 2 ? 'I recommend them to everyone I know.' : 'Fixed the problem in under an hour.'}"`}
                         rows={2}
                       />
                     </div>
@@ -547,16 +526,16 @@ export default function DisenoPagina() {
                 </div>
               </CollapsibleBlock>
 
-              {/* ── BLOCK 3 — IDENTIDAD VISUAL ── */}
-              <CollapsibleBlock number={3} title="Identidad visual"
-                subtitle="Para que el diseño represente cómo quieres que te vean"
+              {/* ── BLOCK 3 — VISUAL IDENTITY ── */}
+              <CollapsibleBlock number={3} title="Visual identity"
+                subtitle="So the design reflects how you want to be seen"
                 isOpen={openBlock === 3} onToggle={() => setOpenBlock(openBlock === 3 ? 0 : 3)}
                 isComplete={block3Complete}
               >
                 {/* Logo */}
-                <Field label="¿Tienes logo?" required>
+                <Field label="Do you have a logo?" required>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-                    {[{ value: 'si', label: 'Sí, lo tengo' }, { value: 'no', label: 'No tengo' }, { value: 'en_proceso', label: 'En proceso' }].map((opt) => (
+                    {[{ value: 'si', label: 'Yes, I have one' }, { value: 'no', label: 'I do not have one' }, { value: 'en_proceso', label: 'In progress' }].map((opt) => (
                       <PillButton key={opt.value} label={opt.label}
                         selected={survey.tiene_logo === opt.value}
                         onClick={() => updateField('tiene_logo', opt.value)} />
@@ -566,7 +545,7 @@ export default function DisenoPagina() {
                     <label style={{ display: 'block', marginTop: '10px', border: `1px dashed ${BORDER}`, borderRadius: '8px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
                       <Upload size={18} style={{ color: MIST, margin: '0 auto 6px', display: 'block' }} />
                       <p style={{ fontSize: '12px', color: MIST, margin: 0, fontFamily: 'var(--font-instrument)' }}>
-                        {uploadingLogo ? 'Subiendo…' : survey.logo_url ? '✓ Logo subido — haz clic para cambiar' : 'Sube tu logo (SVG o PNG con fondo transparente)'}
+                        {uploadingLogo ? 'Uploading…' : survey.logo_url ? '✓ Logo uploaded — click to replace' : 'Upload your logo (SVG or PNG with a transparent background)'}
                       </p>
                       <input type="file" accept=".svg,.png" style={{ display: 'none' }}
                         onChange={handleLogoUpload} />
@@ -575,9 +554,9 @@ export default function DisenoPagina() {
                 </Field>
 
                 {/* Photos */}
-                <Field label="¿Tienes fotos del negocio?" required>
+                <Field label="Do you have photos of your business?" required>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-                    {[{ value: 'si', label: 'Sí tengo' }, { value: 'no', label: 'No tengo' }, { value: 'pronto', label: 'Las haré pronto' }].map((opt) => (
+                    {[{ value: 'si', label: 'Yes' }, { value: 'no', label: 'No' }, { value: 'pronto', label: 'Taking them soon' }].map((opt) => (
                       <PillButton key={opt.value} label={opt.label}
                         selected={survey.tiene_fotos === opt.value}
                         onClick={() => updateField('tiene_fotos', opt.value)} />
@@ -587,7 +566,7 @@ export default function DisenoPagina() {
                     <label style={{ display: 'block', marginTop: '10px', border: `1px dashed ${BORDER}`, borderRadius: '8px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
                       <Upload size={18} style={{ color: MIST, margin: '0 auto 6px', display: 'block' }} />
                       <p style={{ fontSize: '12px', color: MIST, margin: 0, fontFamily: 'var(--font-instrument)' }}>
-                        {uploadingPhotos ? 'Subiendo…' : survey.fotos_urls?.length > 0 ? `✓ ${survey.fotos_urls.length} foto(s) subida(s) — añadir más` : 'Sube hasta 10 fotos (JPG o PNG)'}
+                        {uploadingPhotos ? 'Uploading…' : survey.fotos_urls?.length > 0 ? `✓ ${survey.fotos_urls.length} photo(s) uploaded — add more` : 'Upload up to 10 photos (JPG or PNG)'}
                       </p>
                       <input type="file" accept="image/*" multiple style={{ display: 'none' }}
                         onChange={handlePhotosUpload} />
@@ -596,15 +575,15 @@ export default function DisenoPagina() {
                 </Field>
 
                 {/* Visual style card selector */}
-                <Field label="¿Qué estilo visual te representa?" required>
+                <Field label="Which visual style feels like you?" required>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
                     {[
-                      { value: 'elegante', label: 'Elegante y minimalista', colors: ['#1A1A1A', '#2A2A2A', '#F4F2EC', '#C4A070'] },
-                      { value: 'calido',   label: 'Cálido y cercano',      colors: ['#3A1A0A', '#8A3A18', '#F8F0E4', '#D4A020'] },
-                      { value: 'moderno',  label: 'Moderno y tecnológico', colors: ['#1A2A4A', '#2A4A7A', '#F4F8FC', '#3A90D0'] },
-                      { value: 'artesanal',label: 'Clásico y artesanal',   colors: ['#2A1A0A', '#5A3A18', '#F5F0E5', '#4A6A30'] },
-                      { value: 'atrevido', label: 'Atrevido y llamativo',  colors: ['#1A1A2A', '#2A2A4A', '#FAFAFA', '#E040A0'] },
-                      { value: 'escogenos',label: 'Escoge por nosotros',   colors: ['#0F1923', '#1E2B3A', '#F5F2EE', '#E8A020'], special: true },
+                      { value: 'elegante', label: 'Elegant and minimal',  colors: ['#1A1A1A', '#2A2A2A', '#F2F0EB', '#C4A070'] },
+                      { value: 'calido',   label: 'Warm and welcoming',   colors: ['#3A1A0A', '#8A3A18', '#F7F0F5', '#D4A020'] },
+                      { value: 'moderno',  label: 'Modern and technical', colors: ['#1A2A4A', '#2A4A7A', '#F2F0EB', '#3A90D0'] },
+                      { value: 'artesanal',label: 'Classic and crafted',  colors: ['#2A1A0A', '#5A3A18', '#F7F0F5', '#4A6A30'] },
+                      { value: 'atrevido', label: 'Bold and striking',    colors: ['#1A1A2A', '#2A2A4A', '#F7F6F3', '#E040A0'] },
+                      { value: 'escogenos',label: 'Choose for me',        colors: ['#0D0E12', '#16171C', '#F2F0EB', '#D46FC8'], special: true },
                     ].map((style) => {
                       const sel = survey.estilo_visual === style.value
                       return (
@@ -613,7 +592,7 @@ export default function DisenoPagina() {
                           style={{
                             borderRadius: '10px', padding: 0, cursor: 'pointer', overflow: 'hidden',
                             border: `2px solid ${sel ? AMBER : BORDER}`,
-                            backgroundColor: sel ? 'rgba(232,160,32,0.04)' : BG_CARD,
+                            backgroundColor: sel ? 'rgba(212,111,200,0.04)' : BG_CARD,
                             transition: 'border-color 0.15s',
                           }}
                         >
@@ -633,44 +612,44 @@ export default function DisenoPagina() {
                     })}
                   </div>
                   {survey.estilo_visual === 'escogenos' && (
-                    <div style={{ marginTop: '10px', padding: '12px 16px', backgroundColor: 'rgba(232,160,32,0.06)', border: `1px solid rgba(232,160,32,0.2)`, borderRadius: '8px', fontSize: '12px', color: AMBER, fontFamily: 'var(--font-instrument)' }}>
-                      ✦ Perfecto. Elegiremos el estilo que mejor encaje con tu sector, tu ciudad y tu personalidad de marca.
+                    <div style={{ marginTop: '10px', padding: '12px 16px', backgroundColor: 'rgba(212,111,200,0.06)', border: `1px solid rgba(212,111,200,0.2)`, borderRadius: '8px', fontSize: '12px', color: AMBER, fontFamily: 'var(--font-instrument)' }}>
+                      ✦ Great. We will pick the style that best fits your industry, your city and your brand personality.
                     </div>
                   )}
                 </Field>
 
-                <Field label="Webs de referencia (opcional)" hint="URLs de webs que te gusten. No tienen que ser del mismo sector.">
+                <Field label="Reference sites (optional)" hint="URLs of sites you like. They do not have to be in your industry.">
                   <FocusTextarea value={survey.referencias_urls}
                     onChange={(v) => updateField('referencias_urls', v)}
-                    placeholder={'https://ejemplo1.com\nhttps://ejemplo2.com'} rows={3} />
+                    placeholder={'https://example1.com\nhttps://example2.com'} rows={3} />
                 </Field>
 
-                <Field label="¿Tienes colores de marca?" hint="Si ya usas colores concretos en tu negocio, indícalos.">
+                <Field label="Do you have brand colors?" hint="If you already use specific colors, tell us which.">
                   <FocusInput value={survey.colores_marca}
                     onChange={(v) => updateField('colores_marca', v)}
-                    placeholder="ej. Azul oscuro y blanco, o #1A3A5A" />
+                    placeholder="e.g. Navy and white, or a hex code" />
                 </Field>
               </CollapsibleBlock>
 
-              {/* ── BLOCK 4 — LA WEB ── */}
-              <CollapsibleBlock number={4} title="La web"
-                subtitle="Qué páginas y funcionalidades necesitas"
+              {/* ── BLOCK 4 — THE WEBSITE ── */}
+              <CollapsibleBlock number={4} title="The website"
+                subtitle="Which pages and features you need"
                 isOpen={openBlock === 4} onToggle={() => setOpenBlock(openBlock === 4 ? 0 : 4)}
                 isComplete={block4Complete}
               >
-                <Field label="¿Qué páginas quieres?" required>
+                <Field label="Which pages do you want?" required>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '8px' }}>
                     {[
-                      { value: 'inicio',    label: 'Inicio',               locked: true },
-                      { value: 'servicios', label: 'Servicios' },
-                      { value: 'sobre_mi',  label: 'Sobre mí / nosotros' },
-                      { value: 'galeria',   label: 'Galería de fotos' },
+                      { value: 'inicio',    label: 'Home',                 locked: true },
+                      { value: 'servicios', label: 'Services' },
+                      { value: 'sobre_mi',  label: 'About me / us' },
+                      { value: 'galeria',   label: 'Showcase' },
                       { value: 'blog',      label: 'Blog' },
-                      { value: 'precios',   label: 'Precios' },
-                      { value: 'contacto',  label: 'Contacto' },
-                      { value: 'reservas',  label: 'Reservas online' },
-                      { value: 'tienda',    label: 'Tienda' },
-                      { value: 'otro',      label: 'Otra página' },
+                      { value: 'precios',   label: 'Pricing' },
+                      { value: 'contacto',  label: 'Contact' },
+                      { value: 'reservas',  label: 'Online booking' },
+                      { value: 'tienda',    label: 'Store' },
+                      { value: 'otro',      label: 'Another page' },
                     ].map((page) => {
                       const isSelected = survey.paginas.includes(page.value) || !!page.locked
                       return (
@@ -685,7 +664,7 @@ export default function DisenoPagina() {
                           style={{
                             padding: '10px 14px', borderRadius: '7px', textAlign: 'left',
                             border: `1px solid ${isSelected ? AMBER : BORDER}`,
-                            backgroundColor: isSelected ? 'rgba(232,160,32,0.06)' : 'transparent',
+                            backgroundColor: isSelected ? 'rgba(212,111,200,0.06)' : 'transparent',
                             color: page.locked ? AMBER : isSelected ? AMBER : MIST,
                             fontSize: '13px', cursor: page.locked ? 'default' : 'pointer',
                             fontFamily: 'var(--font-instrument)',
@@ -694,20 +673,20 @@ export default function DisenoPagina() {
                         >
                           {isSelected && <Check size={12} />}
                           {page.label}
-                          {page.locked && <span style={{ fontSize: '10px', color: '#C7C7CC', marginLeft: 'auto' }}>siempre incluida</span>}
+                          {page.locked && <span style={{ fontSize: '10px', color: HINT, marginLeft: 'auto' }}>always included</span>}
                         </button>
                       )
                     })}
                   </div>
                 </Field>
 
-                <Field label="¿Cómo quieres que te contacten?" required>
+                <Field label="How should people get in touch?" required>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
                     {[
-                      { value: 'formulario', label: 'Formulario de contacto' },
-                      { value: 'whatsapp',   label: 'Botón de WhatsApp' },
-                      { value: 'ambos',      label: 'Ambos' },
-                      { value: 'no',         label: 'No por ahora' },
+                      { value: 'formulario', label: 'Contact form' },
+                      { value: 'whatsapp',   label: 'WhatsApp button' },
+                      { value: 'ambos',      label: 'Both' },
+                      { value: 'no',         label: 'Not for now' },
                     ].map((opt) => (
                       <PillButton key={opt.value} label={opt.label}
                         selected={survey.contacto_tipo === opt.value}
@@ -716,9 +695,9 @@ export default function DisenoPagina() {
                   </div>
                 </Field>
 
-                <Field label="¿Tienes dominio propio?" required>
+                <Field label="Do you have your own domain?" required>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                    {[{ value: 'si', label: 'Sí tengo' }, { value: 'no', label: 'Necesito uno' }].map((opt) => (
+                    {[{ value: 'si', label: 'Yes' }, { value: 'no', label: 'I need one' }].map((opt) => (
                       <PillButton key={opt.value} label={opt.label}
                         selected={survey.tiene_dominio === opt.value}
                         onClick={() => updateField('tiene_dominio', opt.value)} />
@@ -727,51 +706,51 @@ export default function DisenoPagina() {
                   {survey.tiene_dominio === 'si' && (
                     <div style={{ marginTop: '8px' }}>
                       <FocusInput value={survey.dominio_actual}
-                        onChange={(v) => updateField('dominio_actual', v)} placeholder="ej. minegocio.es" />
+                        onChange={(v) => updateField('dominio_actual', v)} placeholder="e.g. mybusiness.com" />
                     </div>
                   )}
                 </Field>
 
-                <Field label="¿Hay algo especial que quieras incluir?" hint="ej. Calculadora de presupuesto, zona de reservas, chat en vivo…">
+                <Field label="Anything special you want included?" hint="e.g. Quote calculator, booking area, live chat…">
                   <FocusTextarea value={survey.extras}
                     onChange={(v) => updateField('extras', v)}
-                    placeholder="Cuéntanos cualquier funcionalidad especial que necesites…" rows={2} />
+                    placeholder="Tell us about any special features you need…" rows={2} />
                 </Field>
               </CollapsibleBlock>
 
-              {/* ── BLOCK 5 — CONTACTO Y REDES ── */}
-              <CollapsibleBlock number={5} title="Contacto y redes"
-                subtitle="Para el footer y la sección de contacto de tu web"
+              {/* ── BLOCK 5 — CONTACT AND SOCIAL ── */}
+              <CollapsibleBlock number={5} title="Contact and social"
+                subtitle="For the footer and the contact section of your site"
                 isOpen={openBlock === 5} onToggle={() => setOpenBlock(openBlock === 5 ? 0 : 5)}
                 isComplete={block5Complete}
               >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
-                  <Field label="Teléfono" required>
+                  <Field label="Phone" required>
                     <FocusInput type="tel" value={survey.telefono}
-                      onChange={(v) => updateField('telefono', v)} placeholder="ej. 612 345 678" />
+                      onChange={(v) => updateField('telefono', v)} placeholder="e.g. 612 345 678" />
                   </Field>
-                  <Field label="Email de contacto" required>
+                  <Field label="Contact email" required>
                     <FocusInput type="email" value={survey.email_contacto}
-                      onChange={(v) => updateField('email_contacto', v)} placeholder="ej. hola@minegocio.es" />
+                      onChange={(v) => updateField('email_contacto', v)} placeholder="e.g. hello@mybusiness.com" />
                   </Field>
                   <Field label="WhatsApp">
                     <FocusInput type="tel" value={survey.whatsapp}
-                      onChange={(v) => updateField('whatsapp', v)} placeholder="ej. +34 612 345 678" />
+                      onChange={(v) => updateField('whatsapp', v)} placeholder="e.g. +34 612 345 678" />
                   </Field>
-                  <Field label="Dirección física (si aplica)">
+                  <Field label="Street address (if any)">
                     <FocusInput value={survey.direccion}
-                      onChange={(v) => updateField('direccion', v)} placeholder="ej. Calle Mayor 12, Barcelona" />
+                      onChange={(v) => updateField('direccion', v)} placeholder="e.g. 12 Calle Mayor, Barcelona" />
                   </Field>
                   <Field label="Instagram">
                     <FocusInput value={survey.instagram}
-                      onChange={(v) => updateField('instagram', v)} placeholder="@tunegocio" />
+                      onChange={(v) => updateField('instagram', v)} placeholder="@yourbusiness" />
                   </Field>
-                  <Field label="Facebook (opcional)">
+                  <Field label="Facebook (optional)">
                     <FocusInput value={survey.facebook}
-                      onChange={(v) => updateField('facebook', v)} placeholder="facebook.com/tunegocio" />
+                      onChange={(v) => updateField('facebook', v)} placeholder="facebook.com/yourbusiness" />
                   </Field>
                 </div>
-                <Field label="Google Business (si tienes ficha)" hint="La URL de tu perfil de Google Maps.">
+                <Field label="Google Business (if you have a listing)" hint="The URL of your Google Maps profile.">
                   <FocusInput value={survey.google_business}
                     onChange={(v) => updateField('google_business', v)} placeholder="https://maps.google.com/…" />
                 </Field>
@@ -782,23 +761,18 @@ export default function DisenoPagina() {
                 <div style={{ marginTop: '28px', marginBottom: '48px' }}>
                   {progress < 100 && (
                     <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '12px', color: MIST, marginBottom: '12px', textAlign: 'center' }}>
-                      Puedes enviar ahora o completar más campos primero.
+                      You can send now, or fill in more fields first.
                     </p>
                   )}
                   <button
                     type="button" onClick={handleSubmit} disabled={submitting}
-                    style={{
-                      width: '100%', height: '52px', backgroundColor: INK, color: '#FFFFFF',
-                      border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 700,
-                      cursor: submitting ? 'default' : 'pointer', letterSpacing: '0.02em',
-                      fontFamily: 'var(--font-instrument)', opacity: submitting ? 0.7 : 1,
-                      transition: 'opacity 0.15s',
-                    }}
+                    className="yele-btn yele-btn-primary"
+                    style={{ width: '100%', height: '52px', fontSize: '14px' }}
                   >
-                    {submitting ? 'Enviando…' : '✓ Enviar briefing a Yele Studio'}
+                    {submitting ? 'Sending…' : 'Send brief to Yele Studio'}
                   </button>
-                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: '#C7C7CC', textAlign: 'center', marginTop: '10px' }}>
-                    Te contactaremos en menos de 24 horas.
+                  <p style={{ fontFamily: 'var(--font-instrument)', fontSize: '11px', color: HINT, textAlign: 'center', marginTop: '10px' }}>
+                    We will get back to you within 24 hours.
                   </p>
                 </div>
               )}

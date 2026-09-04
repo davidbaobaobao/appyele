@@ -23,7 +23,7 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName, us
   const handleFile = async (file: File) => {
     setError(null)
     if (file.size > MAX_BYTES) {
-      setError('Máximo 5 MB. Formatos: JPG, PNG, WebP')
+      setError('That file is over 5 MB. Use a JPG, PNG, WebP or GIF under 5 MB.')
       return
     }
 
@@ -37,7 +37,7 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName, us
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setError(err.error ?? 'Error al subir la imagen')
+        setError(err.error ?? "Couldn't upload that image")
         setUploading(false)
         return
       }
@@ -62,21 +62,6 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName, us
     setUploading(false)
   }
 
-  const buttonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    borderRadius: '8px',
-    border: '1.5px dashed rgba(45,63,82,0.8)',
-    backgroundColor: 'rgba(15,25,35,0.6)',
-    color: '#8A9BAD',
-    fontSize: '13px',
-    cursor: 'pointer',
-    transition: 'border-color 0.15s, color 0.15s',
-    width: '100%',
-  } as const
-
   return (
     <div>
       <input
@@ -96,25 +81,17 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName, us
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}
-            alt="Preview"
-            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid rgba(45,63,82,0.4)' }}
+            alt="Image preview"
+            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '12px', flexShrink: 0, border: '1px solid rgba(22,22,26,0.12)' }}
           />
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            style={{ ...buttonStyle, width: 'auto', flexShrink: 0 }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(232,160,32,0.6)'
-              e.currentTarget.style.color = '#F5F2EE'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(45,63,82,0.8)'
-              e.currentTarget.style.color = '#8A9BAD'
-            }}
+            className="yele-btn yele-btn-secondary flex-shrink-0"
           >
             <Upload size={14} />
-            {uploading ? 'Subiendo imagen…' : 'Cambiar imagen'}
+            {uploading ? 'Uploading…' : 'Change image'}
           </button>
         </div>
       ) : (
@@ -122,23 +99,15 @@ export default function ImageUpload({ value, onChange, clientSlug, tableName, us
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          style={buttonStyle}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(232,160,32,0.6)'
-            e.currentTarget.style.color = '#F5F2EE'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(45,63,82,0.8)'
-            e.currentTarget.style.color = '#8A9BAD'
-          }}
+          className="yele-btn yele-btn-secondary w-full"
         >
           <Upload size={14} />
-          {uploading ? 'Subiendo imagen…' : 'Subir imagen'}
+          {uploading ? 'Uploading…' : 'Upload image'}
         </button>
       )}
 
       {error && (
-        <p className="text-xs mt-2" style={{ color: '#C43A2A' }}>{error}</p>
+        <p className="text-xs mt-2" style={{ color: '#B3382B' }}>{error}</p>
       )}
     </div>
   )

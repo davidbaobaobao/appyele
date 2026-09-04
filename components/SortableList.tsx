@@ -45,10 +45,11 @@ export function SortableItem({ id, children }: SortableItemProps) {
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-1 flex-shrink-0"
-        style={{ color: '#8A9BAD', background: 'none', border: 'none' }}
+        className="yele-btn yele-btn-ghost cursor-grab active:cursor-grabbing flex-shrink-0"
+        style={{ color: '#8A8A92', padding: '6px' }}
         type="button"
-        aria-label="Arrastrar para reordenar"
+        aria-label="Drag to reorder"
+        title="Drag to reorder"
       >
         <GripVertical size={16} />
       </button>

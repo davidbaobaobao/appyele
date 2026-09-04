@@ -1,30 +1,53 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Yele design system — ported from yele.design
+   Palette, type and surface language taken from the marketing site so the
+   client app and the site read as one product.
+   ========================================================================== */
+
 @theme {
-  /* Yele dashboard design system */
-  --color-bg:           #FFFFFF;
-  --color-bg-secondary: #F5F5F7;
-  --color-text:         #1D1D1F;
-  --color-mist:         #86868B;
-  --color-accent:       #C8A97E;
-  --color-border:       rgba(0, 0, 0, 0.08);
+  /* --- Core palette ------------------------------------------------------ */
+  --color-ink:          #16161A;  /* primary text / dark surfaces           */
+  --color-ink-soft:     #1A1A1F;  /* dark button fill                       */
+  --color-mist:         #8A8A92;  /* secondary text                         */
+  --color-accent:       #D46FC8;  /* Yele orchid                            */
+  --color-accent-dim:   rgba(212, 111, 200, 0.12);
 
-  /* Legacy tokens (kept for compatibility) */
-  --color-dark:    #0F1923;
-  --color-ink:     #1E2B3A;
-  --color-slate:   #2D3F52;
-  --color-amber:   #E8A020;
-  --color-amber-d: #B87A10;
-  --color-light:   #F5F2EE;
-  --color-success: #2A8A5A;
-  --color-danger:  #C43A2A;
+  /* --- Surfaces ---------------------------------------------------------- */
+  --color-paper:        #F7F6F3;  /* page background (warm off-white)       */
+  --color-surface:      #FFFFFF;  /* raised card                            */
+  --color-surface-2:    #F2F0EB;  /* recessed / secondary card              */
+  --color-surface-3:    #EEEDE9;  /* subtle fills, skeletons, table stripes */
+  --color-night:        #0D0E12;  /* inverted section background            */
+  --color-night-2:      #16171C;  /* inverted card                          */
 
-  /* Typography */
-  --font-outfit:     var(--font-outfit), sans-serif;
-  --font-instrument: var(--font-instrument), sans-serif;
-  --font-serif:      var(--font-dm-serif), serif;
-  --font-sans:       var(--font-dm-sans), sans-serif;
-  --font-mono:       var(--font-dm-mono), monospace;
+  /* --- Lines ------------------------------------------------------------- */
+  --color-line:         rgba(22, 22, 26, 0.08);
+  --color-line-strong:  rgba(22, 22, 26, 0.16);
+  --color-line-invert:  rgba(255, 255, 255, 0.12);
+
+  /* --- Status ------------------------------------------------------------ */
+  --color-success:      #1F7A55;
+  --color-success-bg:   rgba(31, 122, 85, 0.10);
+  --color-info:         #2B4FA8;
+  --color-info-bg:      rgba(43, 79, 168, 0.09);
+  --color-warn:         #8A5A16;
+  --color-warn-bg:      rgba(138, 90, 22, 0.10);
+  --color-danger:       #B3382B;
+  --color-danger-bg:    rgba(179, 56, 43, 0.09);
+
+  /* --- Typography -------------------------------------------------------- */
+  --font-display:    var(--font-archivo), "Archivo", system-ui, sans-serif;
+  --font-instrument: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  --font-mono:       var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+
+  /* --- Radii & elevation -------------------------------------------------- */
+  --radius-card:     16px;
+  --radius-card-lg:  24px;
+  --shadow-card:     0 0 0 1px rgba(22, 22, 26, 0.06), 0 10px 32px rgba(22, 22, 26, 0.06);
+  --shadow-lift:     0 0 0 1px rgba(22, 22, 26, 0.07), 0 16px 48px rgba(22, 22, 26, 0.10);
 }
 
 html,
@@ -33,11 +56,223 @@ body {
 }
 
 body {
-  background-color: #FFFFFF;
-  color: #1D1D1F;
-  font-family: var(--font-instrument), sans-serif;
+  background-color: #F7F6F3;
+  color: #16161A;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use Archivo everywhere, like the site */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-archivo), "Archivo", system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: rgba(212, 111, 200, 0.22);
+  color: #16161A;
+}
+
+/* ==========================================================================
+   Component vocabulary
+   ========================================================================== */
+
+/* --- Eyebrow: mono, uppercase, wide-tracked section label ----------------- */
+.yele-eyebrow {
+  font-family: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(22, 22, 26, 0.55);
+}
+
+.yele-eyebrow-invert {
+  color: rgba(242, 240, 235, 0.7);
+}
+
+/* --- Cards ---------------------------------------------------------------- */
+.yele-card {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(22, 22, 26, 0.06), 0 10px 32px rgba(22, 22, 26, 0.05);
+}
+
+.yele-card-lg {
+  border-radius: 24px;
+}
+
+.yele-card-quiet {
+  background-color: #F2F0EB;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(22, 22, 26, 0.05);
+}
+
+.yele-card-dark {
+  background-color: #16171C;
+  color: #F2F0EB;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* --- Buttons: pill shape with the site's inset light/shadow ---------------- */
+.yele-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.yele-btn:active {
+  transform: translateY(1px);
+}
+
+.yele-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.yele-btn-primary {
+  background-color: #1A1A1F;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 5px 0 rgba(0, 0, 0, 0.35);
+}
+
+.yele-btn-primary:hover:not(:disabled) {
+  background-color: #26262D;
+}
+
+.yele-btn-secondary {
+  background-color: #FFFFFF;
+  color: #16161A;
+  border: 1px solid rgba(22, 22, 26, 0.12);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 5px 0 rgba(0, 0, 0, 0.05);
+}
+
+.yele-btn-secondary:hover:not(:disabled) {
+  background-color: #F7F6F3;
+}
+
+.yele-btn-accent {
+  background-color: #D46FC8;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+    inset 0 -2px 5px 0 rgba(0, 0, 0, 0.18);
+}
+
+.yele-btn-accent:hover:not(:disabled) {
+  background-color: #C55CB9;
+}
+
+.yele-btn-ghost {
+  background-color: transparent;
+  color: rgba(22, 22, 26, 0.65);
+  border: 1px solid transparent;
+}
+
+.yele-btn-ghost:hover:not(:disabled) {
+  background-color: rgba(22, 22, 26, 0.05);
+  color: #16161A;
+}
+
+/* --- Pills / badges -------------------------------------------------------- */
+.yele-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* --- Form controls --------------------------------------------------------- */
+.yele-input,
+.yele-textarea,
+.yele-select {
+  width: 100%;
+  background-color: #FFFFFF;
+  color: #16161A;
+  border: 1px solid rgba(22, 22, 26, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.yele-input::placeholder,
+.yele-textarea::placeholder {
+  color: rgba(22, 22, 26, 0.35);
+}
+
+.yele-input:focus,
+.yele-textarea:focus,
+.yele-select:focus {
+  outline: none;
+  border-color: rgba(212, 111, 200, 0.55);
+  box-shadow: 0 0 0 3px rgba(212, 111, 200, 0.14);
+}
+
+.yele-label {
+  display: block;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(22, 22, 26, 0.7);
+  margin-bottom: 6px;
+}
+
+/* --- Nav items ------------------------------------------------------------- */
+.yele-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-family: var(--font-instrument-face), "Instrument Sans", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(22, 22, 26, 0.62);
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.yele-nav-item:hover {
+  background-color: rgba(22, 22, 26, 0.05);
+  color: #16161A;
+}
+
+.yele-nav-item[data-active="true"] {
+  background-color: #16161A;
+  color: #FFFFFF;
+}
+
+/* --- Hairline divider ------------------------------------------------------ */
+.yele-rule {
+  height: 1px;
+  background-color: rgba(22, 22, 26, 0.08);
+  border: 0;
 }
 
 /* Responsive main content margin */
@@ -50,3 +285,5 @@ body {
     margin-left: 0;
   }
 }
+
+

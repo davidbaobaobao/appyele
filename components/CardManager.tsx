@@ -30,6 +30,8 @@ export interface FieldDef {
   type: 'text' | 'textarea' | 'number' | 'url' | 'tel' | 'email' | 'date' | 'toggle' | 'select' | 'image'
   placeholder?: string
   options?: string[]
+  /** Display labels for `options`; the option *values* stay as stored in Supabase. */
+  optionLabels?: Record<string, string>
   required?: boolean
 }
 
@@ -46,6 +48,9 @@ interface CardManagerProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RecordData = Record<string, any>
 
+// `listings.type` is stored in Supabase as 'Venta' / 'Alquiler'; only the display changes.
+const LISTING_TYPE_LABELS: Record<string, string> = { Venta: 'For sale', Alquiler: 'For rent' }
+
 function renderCard(sectionKey: string, item: RecordData) {
   switch (sectionKey) {
     case 'catalog_items':
@@ -54,27 +59,27 @@ function renderCard(sectionKey: string, item: RecordData) {
           {item.category && (
             <span
               className="text-xs font-mono px-2 py-0.5 rounded"
-              style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#86868B' }}
+              style={{ backgroundColor: 'rgba(22,22,26,0.06)', color: '#8A8A92' }}
             >
               {String(item.category)}
             </span>
           )}
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.name || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.name || '')}</div>
           {item.description && (
-            <div className="text-xs leading-relaxed" style={{ color: '#86868B' }}>{String(item.description)}</div>
+            <div className="text-xs leading-relaxed" style={{ color: '#8A8A92' }}>{String(item.description)}</div>
           )}
           <div className="flex items-center justify-between mt-2">
             {item.price && (
-              <span className="text-sm font-semibold" style={{ color: '#C8A97E' }}>{String(item.price)}</span>
+              <span className="text-sm font-semibold" style={{ color: '#D46FC8' }}>{String(item.price)}</span>
             )}
             <span
               className="text-xs px-2 py-0.5 rounded-full font-medium"
               style={{
-                backgroundColor: item.available ? 'rgba(6,95,70,0.08)' : 'rgba(153,27,27,0.08)',
-                color: item.available ? '#065f46' : '#991b1b',
+                backgroundColor: item.available ? 'rgba(31,122,85,0.08)' : 'rgba(179,56,43,0.09)',
+                color: item.available ? '#1F7A55' : '#B3382B',
               }}
             >
-              {item.available ? 'Disponible' : 'No disponible'}
+              {item.available ? 'Available' : 'Unavailable'}
             </span>
           </div>
         </div>
@@ -83,12 +88,12 @@ function renderCard(sectionKey: string, item: RecordData) {
     case 'services':
       return (
         <div className="space-y-1.5">
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.name || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.name || '')}</div>
           {item.description && (
-            <div className="text-xs leading-relaxed" style={{ color: '#86868B' }}>{String(item.description)}</div>
+            <div className="text-xs leading-relaxed" style={{ color: '#8A8A92' }}>{String(item.description)}</div>
           )}
           {(item.price || item.price_label) && (
-            <div className="text-sm font-semibold" style={{ color: '#C8A97E' }}>
+            <div className="text-sm font-semibold" style={{ color: '#D46FC8' }}>
               {String(item.price_label || item.price || '')}
             </div>
           )}
@@ -98,9 +103,9 @@ function renderCard(sectionKey: string, item: RecordData) {
     case 'team_members':
       return (
         <div className="space-y-1">
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.name || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.name || '')}</div>
           {item.role && (
-            <div className="text-xs" style={{ color: '#86868B' }}>{String(item.role)}</div>
+            <div className="text-xs" style={{ color: '#8A8A92' }}>{String(item.role)}</div>
           )}
         </div>
       )
@@ -114,21 +119,21 @@ function renderCard(sectionKey: string, item: RecordData) {
               <Star
                 key={i}
                 size={12}
-                fill={i < rating ? '#C8A97E' : 'transparent'}
+                fill={i < rating ? '#D46FC8' : 'transparent'}
                 strokeWidth={1.5}
-                style={{ color: '#C8A97E' }}
+                style={{ color: '#D46FC8' }}
               />
             ))}
           </div>
           {item.body && (
-            <div className="text-xs italic leading-relaxed" style={{ color: '#86868B' }}>
+            <div className="text-xs italic leading-relaxed" style={{ color: '#8A8A92' }}>
               &ldquo;{String(item.body)}&rdquo;
             </div>
           )}
-          <div className="text-xs font-medium" style={{ color: '#1D1D1F' }}>
+          <div className="text-xs font-medium" style={{ color: '#16161A' }}>
             {String(item.author_name || '')}
             {item.role && (
-              <span style={{ color: '#86868B' }}> · {String(item.role)}</span>
+              <span style={{ color: '#8A8A92' }}> · {String(item.role)}</span>
             )}
           </div>
         </div>
@@ -138,11 +143,11 @@ function renderCard(sectionKey: string, item: RecordData) {
     case 'faqs':
       return (
         <div className="space-y-1.5">
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.question || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.question || '')}</div>
           {item.answer && (
             <div
               className="text-xs leading-relaxed overflow-hidden"
-              style={{ color: '#86868B', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}
+              style={{ color: '#8A8A92', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}
             >
               {String(item.answer)}
             </div>
@@ -156,18 +161,18 @@ function renderCard(sectionKey: string, item: RecordData) {
           {item.badge && (
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: 'rgba(200,169,126,0.12)', color: '#C8A97E' }}
+              style={{ backgroundColor: 'rgba(212,111,200,0.12)', color: '#D46FC8' }}
             >
               {String(item.badge)}
             </span>
           )}
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.title || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.title || '')}</div>
           {item.description && (
-            <div className="text-xs" style={{ color: '#86868B' }}>{String(item.description)}</div>
+            <div className="text-xs" style={{ color: '#8A8A92' }}>{String(item.description)}</div>
           )}
           {item.valid_until && (
-            <div className="text-xs" style={{ color: '#86868B' }}>
-              Válido hasta: {String(item.valid_until)}
+            <div className="text-xs" style={{ color: '#8A8A92' }}>
+              Valid until: {String(item.valid_until)}
             </div>
           )}
         </div>
@@ -180,20 +185,20 @@ function renderCard(sectionKey: string, item: RecordData) {
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full"
               style={{
-                backgroundColor: item.type === 'Venta' ? 'rgba(6,95,70,0.08)' : 'rgba(30,64,175,0.08)',
-                color: item.type === 'Venta' ? '#065f46' : '#1e40af',
+                backgroundColor: item.type === 'Venta' ? 'rgba(31,122,85,0.08)' : 'rgba(43,79,168,0.08)',
+                color: item.type === 'Venta' ? '#1F7A55' : '#2B4FA8',
               }}
             >
-              {String(item.type)}
+              {LISTING_TYPE_LABELS[String(item.type)] ?? String(item.type)}
             </span>
           )}
-          <div className="font-semibold text-sm" style={{ color: '#1D1D1F' }}>{String(item.title || '')}</div>
+          <div className="font-semibold text-sm" style={{ color: '#16161A' }}>{String(item.title || '')}</div>
           {item.price && (
-            <div className="text-sm font-semibold" style={{ color: '#C8A97E' }}>{String(item.price)}</div>
+            <div className="text-sm font-semibold" style={{ color: '#D46FC8' }}>{String(item.price)}</div>
           )}
-          <div className="flex gap-3 text-xs" style={{ color: '#86868B' }}>
+          <div className="flex gap-3 text-xs" style={{ color: '#8A8A92' }}>
             {item.size_m2 && <span>{String(item.size_m2)} m²</span>}
-            {item.rooms && <span>{String(item.rooms)} hab.</span>}
+            {item.rooms && <span>{String(item.rooms)} bd</span>}
             {item.location && <span>{String(item.location)}</span>}
           </div>
         </div>
@@ -211,17 +216,17 @@ function renderCard(sectionKey: string, item: RecordData) {
             />
           )}
           {item.caption && (
-            <div className="text-xs" style={{ color: '#1D1D1F' }}>{String(item.caption)}</div>
+            <div className="text-xs" style={{ color: '#16161A' }}>{String(item.caption)}</div>
           )}
           {item.category && (
-            <div className="text-xs" style={{ color: '#86868B' }}>{String(item.category)}</div>
+            <div className="text-xs" style={{ color: '#8A8A92' }}>{String(item.category)}</div>
           )}
         </div>
       )
 
     default:
       return (
-        <div className="text-sm" style={{ color: '#1D1D1F' }}>
+        <div className="text-sm" style={{ color: '#16161A' }}>
           {String(item.name || item.title || item.question || JSON.stringify(item))}
         </div>
       )
@@ -246,7 +251,7 @@ function SortableCard({
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 10 : 'auto',
         position: 'relative',
-        boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : 'none',
+        boxShadow: isDragging ? '0 8px 24px rgba(22,22,26,0.12)' : 'none',
       }}
       className="group/sortable flex items-stretch gap-2"
     >
@@ -254,7 +259,7 @@ function SortableCard({
       <div
         {...attributes}
         {...listeners}
-        title="Arrastra para reordenar"
+        title="Drag to reorder"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -276,7 +281,7 @@ function SortableCard({
   )
 }
 
-const SAVED_NOTICE = 'Los cambios aparecerán en tu web en menos de 60 segundos.'
+const SAVED_NOTICE = 'Changes will show on your site within 60 seconds.'
 
 export default function CardManager({ sectionKey, clientId, clientSlug, title, icon, fields, useAdminApi = false }: CardManagerProps) {
   const supabase = supabaseClient
@@ -353,7 +358,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
         .update(coercedData)
         .eq('id', editingItem.id as string)
       if (!error) {
-        showToast(`✓ Elemento actualizado. ${SAVED_NOTICE}`)
+        showToast(`✓ Item updated. ${SAVED_NOTICE}`)
         fetchItems()
         revalidateYeleSite('/')
       }
@@ -363,9 +368,9 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
         .insert({ ...coercedData, client_id: clientId })
       if (error) {
         console.error('CardManager insert error:', JSON.stringify(error))
-        alert('Error guardando: ' + error.message + ' — code: ' + error.code)
+        alert("Couldn't save: " + error.message + ' — code: ' + error.code)
       } else {
-        showToast(`✓ Elemento añadido. ${SAVED_NOTICE}`)
+        showToast(`✓ Item added. ${SAVED_NOTICE}`)
         fetchItems()
         revalidateYeleSite('/')
       }
@@ -377,7 +382,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from(sectionKey).delete().eq('id', id)
     if (!error) {
-      showToast(`✓ Elemento eliminado. ${SAVED_NOTICE}`)
+      showToast(`✓ Item deleted. ${SAVED_NOTICE}`)
       fetchItems()
       revalidateYeleSite('/')
     }
@@ -405,51 +410,30 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
       )
     )
 
-    showToast(`✓ Orden guardado. ${SAVED_NOTICE}`)
+    showToast(`✓ Order saved. ${SAVED_NOTICE}`)
     revalidateYeleSite('/')
   }, [items, supabase, sectionKey, clientId, showToast])
 
-  const inputStyle = {
-    backgroundColor: '#FFFFFF',
-    border: '1px solid rgba(0,0,0,0.08)',
-    color: '#1D1D1F',
-    borderRadius: '8px',
-    padding: '10px 14px',
-    fontSize: '14px',
-    width: '100%',
-    outline: 'none',
-    fontFamily: 'var(--font-instrument)',
-  }
-
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' }}
-    >
+    <div className="yele-card yele-card-lg overflow-hidden">
       {/* Header */}
       <div
         className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+        style={{ borderBottom: '1px solid rgba(22,22,26,0.06)' }}
       >
         <div className="flex items-center gap-2">
-          {icon && <span style={{ color: '#C8A97E' }}>{icon}</span>}
-          <h3 className="font-semibold text-sm" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>{title}</h3>
+          {icon && <span style={{ color: '#D46FC8' }}>{icon}</span>}
+          <h3 className="font-semibold text-sm" style={{ color: '#16161A', fontFamily: 'var(--font-display)' }}>{title}</h3>
           <span
             className="text-xs px-1.5 py-0.5 rounded font-mono"
-            style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#86868B' }}
+            style={{ backgroundColor: 'rgba(22,22,26,0.06)', color: '#8A8A92' }}
           >
             {items.length}
           </span>
         </div>
-        <button
-          onClick={openAddPanel}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-          style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1D1D1F' }}
-        >
+        <button onClick={openAddPanel} className="yele-btn yele-btn-primary">
           <Plus size={14} />
-          Añadir
+          Add
         </button>
       </div>
 
@@ -458,18 +442,15 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-pulse">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-xl" style={{ backgroundColor: '#F5F5F7' }} />
+              <div key={i} className="h-24 rounded-xl" style={{ backgroundColor: '#F2F0EB' }} />
             ))}
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>No hay elementos todavía.</p>
-            <button
-              onClick={openAddPanel}
-              className="mt-3 text-xs font-medium transition-colors"
-              style={{ color: '#C8A97E', fontFamily: 'var(--font-instrument)' }}
-            >
-              + Añadir el primero
+            <p className="text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>No items yet.</p>
+            <button onClick={openAddPanel} className="yele-btn yele-btn-ghost mt-3" style={{ color: '#D46FC8' }}>
+              <Plus size={13} />
+              Add the first one
             </button>
           </div>
         ) : (
@@ -485,30 +466,29 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
               <div className="flex flex-col gap-2">
                 {items.map((item) => (
                   <SortableCard key={String(item.id)} id={String(item.id)}>
-                    <div
-                      className="rounded-xl p-4 relative group"
-                      style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}
-                    >
+                    <div className="yele-card-quiet p-4 relative group">
                       {renderCard(sectionKey, item)}
                       {/* Action buttons */}
                       <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          aria-label="Edit"
                           onClick={() => openEditPanel(item)}
                           className="p-1.5 rounded-lg transition-colors"
-                          style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(200,169,126,0.15)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.06)' }}
+                          style={{ backgroundColor: 'rgba(22,22,26,0.06)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(212,111,200,0.15)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(22,22,26,0.06)' }}
                         >
-                          <Pencil size={12} style={{ color: '#86868B' }} />
+                          <Pencil size={12} style={{ color: '#8A8A92' }} />
                         </button>
                         <button
+                          aria-label="Delete"
                           onClick={() => setConfirmDelete(String(item.id))}
                           className="p-1.5 rounded-lg transition-colors"
-                          style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(153,27,27,0.10)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.06)' }}
+                          style={{ backgroundColor: 'rgba(22,22,26,0.06)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(179,56,43,0.09)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(22,22,26,0.06)' }}
                         >
-                          <Trash2 size={12} style={{ color: '#86868B' }} />
+                          <Trash2 size={12} style={{ color: '#8A8A92' }} />
                         </button>
                       </div>
                     </div>
@@ -543,23 +523,24 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
               style={{
                 width: '400px',
                 backgroundColor: '#FFFFFF',
-                borderLeft: '1px solid rgba(0,0,0,0.08)',
+                borderLeft: '1px solid rgba(22,22,26,0.08)',
               }}
             >
               {/* Panel header */}
               <div
                 className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                style={{ borderBottom: '1px solid rgba(22,22,26,0.06)' }}
               >
-                <h4 className="font-semibold text-sm" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>
-                  {editingItem ? 'Editar elemento' : 'Añadir elemento'}
+                <h4 className="font-semibold text-sm" style={{ color: '#16161A', fontFamily: 'var(--font-display)' }}>
+                  {editingItem ? 'Edit item' : 'Add item'}
                 </h4>
                 <button
+                  aria-label="Close"
                   onClick={() => setPanelOpen(false)}
                   className="p-1.5 rounded-lg transition-colors"
-                  style={{ color: '#86868B' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#1D1D1F' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B' }}
+                  style={{ color: '#8A8A92' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#16161A' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#8A8A92' }}
                 >
                   <X size={16} />
                 </button>
@@ -569,12 +550,9 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
               <div className="flex-1 p-5 space-y-4 overflow-y-auto">
                 {fields.map((field) => (
                   <div key={field.key}>
-                    <label
-                      className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                      style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}
-                    >
+                    <label className="yele-label">
                       {field.label}
-                      {field.required && <span style={{ color: '#C8A97E' }}> *</span>}
+                      {field.required && <span style={{ color: '#D46FC8' }}> *</span>}
                     </label>
 
                     {field.type === 'image' ? (
@@ -590,11 +568,11 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
                         type="button"
                         onClick={() => setFormData((p) => ({ ...p, [field.key]: !p[field.key] }))}
                         className="flex items-center gap-2 text-sm"
-                        style={{ color: '#1D1D1F', fontFamily: 'var(--font-instrument)' }}
+                        style={{ color: '#16161A', fontFamily: 'var(--font-instrument)' }}
                       >
                         <div
                           className="w-10 h-5 rounded-full transition-colors relative"
-                          style={{ backgroundColor: formData[field.key] ? '#1D1D1F' : 'rgba(0,0,0,0.1)' }}
+                          style={{ backgroundColor: formData[field.key] ? '#16161A' : 'rgba(0,0,0,0.1)' }}
                         >
                           <div
                             className="absolute top-0.5 w-4 h-4 rounded-full transition-transform"
@@ -604,7 +582,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
                             }}
                           />
                         </div>
-                        {formData[field.key] ? 'Sí' : 'No'}
+                        {formData[field.key] ? 'Yes' : 'No'}
                       </button>
                     ) : field.type === 'textarea' ? (
                       <textarea
@@ -612,19 +590,19 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
                         onChange={(e) => setFormData((p) => ({ ...p, [field.key]: e.target.value }))}
                         placeholder={field.placeholder}
                         rows={3}
-                        style={{ ...inputStyle, resize: 'vertical' }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+                        className="yele-textarea"
+                        style={{ resize: 'vertical' }}
                       />
                     ) : field.type === 'select' ? (
                       <select
                         value={String(formData[field.key] ?? '')}
                         onChange={(e) => setFormData((p) => ({ ...p, [field.key]: e.target.value }))}
-                        style={{ ...inputStyle, cursor: 'pointer' }}
+                        className="yele-select"
+                        style={{ cursor: 'pointer' }}
                       >
-                        <option value="">Seleccionar…</option>
+                        <option value="">Select…</option>
                         {field.options?.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
+                          <option key={opt} value={opt}>{field.optionLabels?.[opt] ?? opt}</option>
                         ))}
                       </select>
                     ) : (
@@ -633,9 +611,7 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
                         value={String(formData[field.key] ?? '')}
                         onChange={(e) => setFormData((p) => ({ ...p, [field.key]: e.target.value }))}
                         placeholder={field.placeholder}
-                        style={inputStyle}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
+                        className="yele-input"
                       />
                     )}
                   </div>
@@ -645,31 +621,13 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
               {/* Panel footer */}
               <div
                 className="p-5 flex gap-3 flex-shrink-0"
-                style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+                style={{ borderTop: '1px solid rgba(22,22,26,0.06)' }}
               >
-                <button
-                  onClick={() => setPanelOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    color: '#86868B',
-                    fontFamily: 'var(--font-instrument)',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  Cancelar
+                <button onClick={() => setPanelOpen(false)} className="yele-btn yele-btn-secondary flex-1">
+                  Cancel
                 </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
-                  style={{ backgroundColor: '#1D1D1F', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-                  onMouseEnter={(e) => { if (!saving) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1D1D1F' }}
-                >
-                  {saving ? 'Guardando…' : 'Guardar'}
+                <button onClick={handleSave} disabled={saving} className="yele-btn yele-btn-primary flex-1">
+                  {saving ? 'Saving…' : 'Save'}
                 </button>
               </div>
             </motion.div>
@@ -691,34 +649,22 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-2xl p-6 w-full max-w-sm"
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' }}
+              className="yele-card yele-card-lg p-6 w-full max-w-sm"
             >
-              <h4 className="font-semibold mb-2" style={{ color: '#1D1D1F', fontFamily: 'var(--font-outfit)' }}>¿Eliminar este elemento?</h4>
-              <p className="text-sm mb-5" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Esta acción no se puede deshacer.</p>
+              <h4 className="font-semibold mb-2" style={{ color: '#16161A', fontFamily: 'var(--font-display)' }}>Delete this item?</h4>
+              <p className="text-sm mb-5" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>This can’t be undone.</p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmDelete(null)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    color: '#86868B',
-                    fontFamily: 'var(--font-instrument)',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F5F5F7' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  Cancelar
+                <button onClick={() => setConfirmDelete(null)} className="yele-btn yele-btn-secondary flex-1">
+                  Cancel
                 </button>
                 <button
                   onClick={() => handleDelete(confirmDelete)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ backgroundColor: '#991b1b', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#7f1d1d' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#991b1b' }}
+                  className="yele-btn flex-1"
+                  style={{ backgroundColor: '#B3382B', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                 >
-                  Eliminar
+                  Delete
                 </button>
               </div>
             </motion.div>
@@ -735,9 +681,9 @@ export default function CardManager({ sectionKey, clientId, clientSlug, title, i
             exit={{ opacity: 0, y: 10 }}
             className="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-sm font-medium max-w-sm"
             style={{
-              backgroundColor: 'rgba(6,95,70,0.08)',
-              border: '1px solid rgba(6,95,70,0.2)',
-              color: '#065f46',
+              backgroundColor: 'rgba(31,122,85,0.08)',
+              border: '1px solid rgba(31,122,85,0.2)',
+              color: '#1F7A55',
               fontFamily: 'var(--font-instrument)',
             }}
           >

@@ -6,7 +6,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#F7F6F3' }}>
       <Sidebar />
       <main className="flex-1 flex flex-col dashboard-main">
         {children}

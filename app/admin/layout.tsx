@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 import { isAdmin } from '@/lib/is-admin'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
-export const metadata = { title: 'Admin — Vitrina Studio' }
+export const metadata = { title: 'Admin — Yele' }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!isAdmin(user.email)) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#F7F6F3' }}>
       <AdminSidebar />
       <main className="flex-1 flex flex-col" style={{ marginLeft: '240px' }}>
         {children}

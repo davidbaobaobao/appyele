@@ -29,10 +29,10 @@ export async function DELETE(
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     if (session.user.email !== ADMIN_EMAIL) {
-      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 })
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     const { id } = await params

@@ -17,11 +17,11 @@ interface Props {
 }
 
 function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function groupByDate(messages: Message[]) {
@@ -118,20 +118,18 @@ export default function AdminMessageThread({ clientId }: Props) {
 
   return (
     <div
-      className="rounded-xl flex flex-col"
-      style={{
-        backgroundColor: '#1E2B3A',
-        border: '1px solid rgba(45,63,82,0.4)',
-        height: '600px',
-      }}
+      className="yele-card-dark flex flex-col"
+      style={{ height: '600px' }}
     >
       {/* Header */}
       <div
         className="px-4 py-3 flex-shrink-0 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(45,63,82,0.4)' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}
       >
-        <h3 className="text-sm font-semibold" style={{ color: '#F5F2EE' }}>Mensajes</h3>
-        <span className="text-xs" style={{ color: '#8A9BAD' }}>{messages.length} mensajes</span>
+        <h3 className="text-sm font-semibold" style={{ color: '#F2F0EB' }}>Messages</h3>
+        <span className="yele-eyebrow yele-eyebrow-invert">
+          {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+        </span>
       </div>
 
       {/* Messages */}
@@ -140,22 +138,22 @@ export default function AdminMessageThread({ clientId }: Props) {
           <div className="space-y-3 animate-pulse">
             {[1, 2, 3].map((i) => (
               <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                <div className="h-10 rounded-2xl" style={{ width: `${120 + i * 30}px`, backgroundColor: '#2D3F52' }} />
+                <div className="h-10 rounded-2xl" style={{ width: `${120 + i * 30}px`, backgroundColor: 'rgba(242,240,235,0.08)' }} />
               </div>
             ))}
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-12 text-center">
-            <p className="text-sm" style={{ color: '#8A9BAD' }}>Sin mensajes todavía</p>
+            <p className="text-sm" style={{ color: '#8A8A92' }}>No messages yet</p>
           </div>
         ) : (
           groups.map((group) => (
             <div key={group.date} className="space-y-2">
               {/* Date separator */}
               <div className="flex items-center gap-2 my-2">
-                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.4)' }} />
-                <span className="text-xs" style={{ color: '#8A9BAD' }}>{formatDate(group.date)}</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(45,63,82,0.4)' }} />
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
+                <span className="yele-eyebrow yele-eyebrow-invert">{formatDate(group.date)}</span>
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
               </div>
 
               {group.messages.map((msg) => {
@@ -164,29 +162,27 @@ export default function AdminMessageThread({ clientId }: Props) {
                   <div key={msg.id} className={`flex ${isClient ? 'justify-end' : 'justify-start'}`}>
                     <div style={{ maxWidth: '75%' }}>
                       {/* Role label */}
-                      <div
-                        className={`text-xs mb-0.5 ${isClient ? 'text-right' : 'text-left'}`}
-                        style={{ color: '#8A9BAD' }}
-                      >
-                        {isClient ? 'Cliente' : 'Estudio'}
+                      <div className={`yele-eyebrow yele-eyebrow-invert mb-1 ${isClient ? 'text-right' : 'text-left'}`}>
+                        {isClient ? 'Client' : 'Studio'}
                       </div>
                       <div
                         className="px-3 py-2 text-sm leading-relaxed"
                         style={{
-                          backgroundColor: isClient ? '#E8A020' : '#2D3F52',
-                          color: isClient ? '#0F1923' : '#F5F2EE',
+                          backgroundColor: isClient ? '#FFFFFF' : '#16161A',
+                          color: isClient ? '#16161A' : '#F2F0EB',
                           borderRadius: isClient ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
+                          border: isClient ? '1px solid rgba(22,22,26,0.08)' : '1px solid rgba(255,255,255,0.12)',
                         }}
                       >
                         {msg.body}
                       </div>
                       <div
-                        className={`text-xs mt-0.5 ${isClient ? 'text-right' : 'text-left'}`}
-                        style={{ color: '#8A9BAD' }}
+                        className={`text-xs mt-1 ${isClient ? 'text-right' : 'text-left'}`}
+                        style={{ color: '#8A8A92', fontFamily: 'var(--font-mono)' }}
                       >
                         {formatTime(msg.created_at)}
                         {isClient && !msg.read && (
-                          <span className="ml-1" style={{ color: '#E8A020' }}>● no leído</span>
+                          <span className="ml-1" style={{ color: '#D46FC8' }}>● unread</span>
                         )}
                       </div>
                     </div>
@@ -202,35 +198,33 @@ export default function AdminMessageThread({ clientId }: Props) {
       {/* Reply input */}
       <div
         className="px-4 py-3 flex-shrink-0 flex items-end gap-2"
-        style={{ borderTop: '1px solid rgba(45,63,82,0.4)' }}
+        style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}
       >
         <textarea
           ref={textareaRef}
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Responder al cliente… (Enter para enviar)"
+          placeholder="Reply to the client… (Enter to send)"
           rows={1}
-          className="flex-1 resize-none rounded-lg px-3 py-2.5 text-sm outline-none transition-colors"
+          aria-label="Reply to the client"
+          className="yele-textarea flex-1 resize-none"
           style={{
-            backgroundColor: '#0F1923',
-            border: '1px solid rgba(45,63,82,0.6)',
-            color: '#F5F2EE',
+            backgroundColor: '#0D0E12',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: '#F2F0EB',
             maxHeight: '120px',
           }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(232,160,32,0.6)' }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(45,63,82,0.6)' }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(212,111,200,0.55)' }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || sending}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#E8A020', color: '#0F1923' }}
-          onMouseEnter={(e) => { if (input.trim()) e.currentTarget.style.backgroundColor = '#B87A10' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#E8A020' }}
+          className="yele-btn yele-btn-accent flex-shrink-0"
         >
           <Send size={13} />
-          {sending ? 'Enviando…' : 'Responder'}
+          {sending ? 'Sending…' : 'Reply'}
         </button>
       </div>
     </div>

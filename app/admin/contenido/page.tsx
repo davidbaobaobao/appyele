@@ -38,21 +38,20 @@ interface FAQItem {
 
 // ── Style constants ───────────────────────────────────────────────────────────
 
-const S = {
-  card: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '16px' },
-  input: { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
-  label: { color: '#86868B', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
-  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
-  btnGhost: { backgroundColor: 'transparent', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
-  btnDanger: { backgroundColor: 'rgba(153,27,27,0.06)', color: '#991b1b', border: '1px solid rgba(153,27,27,0.15)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' },
-  tab: (active: boolean) => ({
-    padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-    borderRadius: '8px', border: 'none',
-    backgroundColor: active ? '#1D1D1F' : 'transparent',
-    color: active ? '#FFFFFF' : '#86868B',
-    fontFamily: 'var(--font-instrument)',
-  }),
+// Destructive action: keeps the .yele-btn pill, overrides colour only.
+const dangerBtn = {
+  backgroundColor: 'rgba(179,56,43,0.09)',
+  color: '#B3382B',
+  border: '1px solid rgba(179,56,43,0.22)',
+  padding: '9px 14px',
 }
+
+const tabBtn = (active: boolean) => ({
+  backgroundColor: active ? '#16161A' : 'transparent',
+  color: active ? '#FFFFFF' : '#8A8A92',
+  border: '1px solid transparent',
+  boxShadow: 'none',
+})
 
 // ── Showcase Section ──────────────────────────────────────────────────────────
 
@@ -106,27 +105,27 @@ function ShowcaseSection() {
       await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error guardando showcase:', err)
-      alert('Error guardando: ' + msg)
+      console.error('Error saving showcase:', err)
+      alert("Couldn't save: " + msg)
     } finally { setSaving(null) }
   }
 
   async function remove(idx: number) {
     const item = items[idx]
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
-    if (!confirm('¿Eliminar este proyecto? Esta acción no se puede deshacer.')) return
+    if (!confirm('Delete this project? This cannot be undone.')) return
     try {
       const res = await fetch(`/api/admin/showcase/${item.id}`, { method: 'DELETE' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        alert("Couldn't delete: " + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
         return
       }
       setItems(prev => prev.filter((_, i) => i !== idx))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error eliminando showcase:', err)
-      alert('Error al eliminar: ' + msg)
+      console.error('Error deleting showcase:', err)
+      alert("Couldn't delete: " + msg)
     }
   }
 
@@ -140,26 +139,26 @@ function ShowcaseSection() {
         )
       )
       await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
-    } catch (err) { console.error('Error reordenando showcase:', err) }
+    } catch (err) { console.error('Error reordering showcase:', err) }
   }
 
   function renderShowcaseCard(item: ShowcaseProject, idx: number) {
     return (
-      <div style={S.card}>
+      <div className="yele-card p-4">
         <div className="grid grid-cols-1 gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={S.label}>Nombre</label>
-              <input style={S.input} value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="El Taller · Cerámica, Gràcia" />
+              <label className="yele-label">Name</label>
+              <input className="yele-input" value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="The Workshop · Ceramics, Brooklyn" />
             </div>
             <div>
-              <label style={S.label}>Descripción</label>
-              <input style={S.input} value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Breve descripción" />
+              <label className="yele-label">Description</label>
+              <input className="yele-input" value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Short description" />
             </div>
           </div>
-          <ImageUploader label="Imagen principal" value={item.main_image} onChange={url => update(idx, { main_image: url })} />
+          <ImageUploader label="Main image" value={item.main_image} onChange={url => update(idx, { main_image: url })} />
           <div>
-            <label style={S.label}>Imágenes adicionales</label>
+            <label className="yele-label">Additional images</label>
             <div className="space-y-2">
               {item.additional_images.map((imgUrl, imgIdx) => (
                 <div key={imgIdx} className="flex items-start gap-2">
@@ -176,7 +175,8 @@ function ShowcaseSection() {
                   <button
                     type="button"
                     onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
-                    style={{ ...S.btnDanger, padding: '6px', marginTop: '18px', flexShrink: 0 }}
+                    className="yele-btn"
+                    style={{ ...dangerBtn, padding: '9px', marginTop: '18px', flexShrink: 0 }}
                   >
                     <X size={13} />
                   </button>
@@ -184,23 +184,24 @@ function ShowcaseSection() {
               ))}
               <button
                 type="button"
-                style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', padding: '4px 10px' }}
+                className="yele-btn yele-btn-ghost"
+                style={{ fontSize: '12px', padding: '7px 14px' }}
                 onClick={() => update(idx, { additional_images: [...item.additional_images, ''] })}
               >
-                <Plus size={12} /> Añadir imagen
+                <Plus size={12} /> Add image
               </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+            <button className="yele-btn yele-btn-secondary" onClick={() => update(idx, { visible: !item.visible })}>
               {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-              {item.visible ? 'Visible' : 'Oculto'}
+              {item.visible ? 'Visible' : 'Hidden'}
             </button>
-            <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+            <button className="yele-btn yele-btn-primary" onClick={() => save(idx)} disabled={saving === String(idx)}>
               <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-              {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+              {saving === String(idx) ? 'Saving…' : 'Save'}
             </button>
-            <button style={S.btnDanger} onClick={() => remove(idx)}>
+            <button className="yele-btn" style={dangerBtn} onClick={() => remove(idx)}>
               <Trash2 size={13} />
             </button>
           </div>
@@ -209,7 +210,7 @@ function ShowcaseSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>Loading…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -229,10 +230,10 @@ function ShowcaseSection() {
         return <div key={idx}>{renderShowcaseCard(item, idx)}</div>
       })}
       <button
-        style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}
+        className="yele-btn yele-btn-secondary mt-2"
         onClick={() => setItems(prev => [...prev, { name: '', description: '', main_image: '', additional_images: [], visible: true, sort_order: 0 }])}
       >
-        <Plus size={14} /> Añadir proyecto
+        <Plus size={14} /> Add project
       </button>
     </div>
   )
@@ -283,27 +284,27 @@ function TestimonialsSection() {
       await revalidateYeleSite('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error guardando testimonio:', err)
-      alert('Error guardando: ' + msg)
+      console.error('Error saving testimonial:', err)
+      alert("Couldn't save: " + msg)
     } finally { setSaving(null) }
   }
 
   async function remove(idx: number) {
     const item = items[idx]
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
-    if (!confirm('¿Eliminar este testimonio? Esta acción no se puede deshacer.')) return
+    if (!confirm('Delete this testimonial? This cannot be undone.')) return
     try {
       const res = await fetch(`/api/admin/testimonials/${item.id}`, { method: 'DELETE' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        alert("Couldn't delete: " + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
         return
       }
       setItems(prev => prev.filter((_, i) => i !== idx))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error eliminando testimonio:', err)
-      alert('Error al eliminar: ' + msg)
+      console.error('Error deleting testimonial:', err)
+      alert("Couldn't delete: " + msg)
     }
   }
 
@@ -317,42 +318,43 @@ function TestimonialsSection() {
         )
       )
       await revalidateYeleSite('/')
-    } catch (err) { console.error('Error reordenando testimonials:', err) }
+    } catch (err) { console.error('Error reordering testimonials:', err) }
   }
 
   function renderTestimonialCard(item: Testimonial, idx: number) {
     return (
-      <div style={S.card}>
+      <div className="yele-card p-4">
         <div className="grid grid-cols-1 gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={S.label}>Autor</label>
-              <input style={S.input} value={item.author} onChange={e => update(idx, { author: e.target.value })} placeholder="Sara M." />
+              <label className="yele-label">Author</label>
+              <input className="yele-input" value={item.author} onChange={e => update(idx, { author: e.target.value })} placeholder="Sara M." />
             </div>
             <div>
-              <label style={S.label}>Cargo / Ciudad</label>
-              <input style={S.input} value={item.role} onChange={e => update(idx, { role: e.target.value })} placeholder="Instructora de yoga, Madrid" />
+              <label className="yele-label">Role / City</label>
+              <input className="yele-input" value={item.role} onChange={e => update(idx, { role: e.target.value })} placeholder="Yoga instructor, Austin" />
             </div>
           </div>
           <div>
-            <label style={S.label}>Texto</label>
+            <label className="yele-label">Text</label>
             <textarea
-              style={{ ...S.input, minHeight: '72px', resize: 'vertical' }}
+              className="yele-textarea"
+              style={{ minHeight: '72px', resize: 'vertical' }}
               value={item.text}
               onChange={e => update(idx, { text: e.target.value })}
-              placeholder="Testimonio del cliente…"
+              placeholder="Client testimonial…"
             />
           </div>
           <div className="flex items-center gap-2">
-            <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+            <button className="yele-btn yele-btn-secondary" onClick={() => update(idx, { visible: !item.visible })}>
               {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-              {item.visible ? 'Visible' : 'Oculto'}
+              {item.visible ? 'Visible' : 'Hidden'}
             </button>
-            <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+            <button className="yele-btn yele-btn-primary" onClick={() => save(idx)} disabled={saving === String(idx)}>
               <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-              {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+              {saving === String(idx) ? 'Saving…' : 'Save'}
             </button>
-            <button style={S.btnDanger} onClick={() => remove(idx)}>
+            <button className="yele-btn" style={dangerBtn} onClick={() => remove(idx)}>
               <Trash2 size={13} />
             </button>
           </div>
@@ -361,7 +363,7 @@ function TestimonialsSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>Loading…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -381,10 +383,10 @@ function TestimonialsSection() {
         return <div key={idx}>{renderTestimonialCard(item, idx)}</div>
       })}
       <button
-        style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}
+        className="yele-btn yele-btn-secondary mt-2"
         onClick={() => setItems(prev => [...prev, { author: '', role: '', text: '', visible: true, sort_order: 0 }])}
       >
-        <Plus size={14} /> Añadir testimonio
+        <Plus size={14} /> Add testimonial
       </button>
     </div>
   )
@@ -435,27 +437,27 @@ function FAQsSection() {
       await revalidateYeleSite('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error guardando FAQ:', err)
-      alert('Error guardando: ' + msg)
+      console.error('Error saving FAQ:', err)
+      alert("Couldn't save: " + msg)
     } finally { setSaving(null) }
   }
 
   async function remove(idx: number) {
     const item = items[idx]
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
-    if (!confirm('¿Eliminar esta pregunta? Esta acción no se puede deshacer.')) return
+    if (!confirm('Delete this question? This cannot be undone.')) return
     try {
       const res = await fetch(`/api/admin/faqs/${item.id}`, { method: 'DELETE' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        alert('Error al eliminar: ' + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
+        alert("Couldn't delete: " + (body.error ?? res.statusText) + (body.code ? ' — code: ' + body.code : ''))
         return
       }
       setItems(prev => prev.filter((_, i) => i !== idx))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error('Error eliminando FAQ:', err)
-      alert('Error al eliminar: ' + msg)
+      console.error('Error deleting FAQ:', err)
+      alert("Couldn't delete: " + msg)
     }
   }
 
@@ -469,36 +471,37 @@ function FAQsSection() {
         )
       )
       await revalidateYeleSite('/')
-    } catch (err) { console.error('Error reordenando faqs:', err) }
+    } catch (err) { console.error('Error reordering FAQs:', err) }
   }
 
   function renderFAQCard(item: FAQItem, idx: number) {
     return (
-      <div style={S.card}>
+      <div className="yele-card p-4">
         <div className="grid grid-cols-1 gap-3">
           <div>
-            <label style={S.label}>Pregunta</label>
-            <input style={S.input} value={item.question} onChange={e => update(idx, { question: e.target.value })} placeholder="¿Cuánto tarda mi web?" />
+            <label className="yele-label">Question</label>
+            <input className="yele-input" value={item.question} onChange={e => update(idx, { question: e.target.value })} placeholder="How long does my site take?" />
           </div>
           <div>
-            <label style={S.label}>Respuesta</label>
+            <label className="yele-label">Answer</label>
             <textarea
-              style={{ ...S.input, minHeight: '72px', resize: 'vertical' }}
+              className="yele-textarea"
+              style={{ minHeight: '72px', resize: 'vertical' }}
               value={item.answer}
               onChange={e => update(idx, { answer: e.target.value })}
-              placeholder="Respuesta completa…"
+              placeholder="Full answer…"
             />
           </div>
           <div className="flex items-center gap-2">
-            <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
+            <button className="yele-btn yele-btn-secondary" onClick={() => update(idx, { visible: !item.visible })}>
               {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-              {item.visible ? 'Visible' : 'Oculto'}
+              {item.visible ? 'Visible' : 'Hidden'}
             </button>
-            <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
+            <button className="yele-btn yele-btn-primary" onClick={() => save(idx)} disabled={saving === String(idx)}>
               <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-              {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+              {saving === String(idx) ? 'Saving…' : 'Save'}
             </button>
-            <button style={S.btnDanger} onClick={() => remove(idx)}>
+            <button className="yele-btn" style={dangerBtn} onClick={() => remove(idx)}>
               <Trash2 size={13} />
             </button>
           </div>
@@ -507,7 +510,7 @@ function FAQsSection() {
     )
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>Loading…</div>
 
   const savedItems = items.filter(it => it.id)
   const unsavedItems = items.filter(it => !it.id)
@@ -527,10 +530,10 @@ function FAQsSection() {
         return <div key={idx}>{renderFAQCard(item, idx)}</div>
       })}
       <button
-        style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}
+        className="yele-btn yele-btn-secondary mt-2"
         onClick={() => setItems(prev => [...prev, { question: '', answer: '', visible: true, sort_order: 0 }])}
       >
-        <Plus size={14} /> Añadir pregunta
+        <Plus size={14} /> Add question
       </button>
     </div>
   )
@@ -540,24 +543,32 @@ function FAQsSection() {
 
 type Tab = 'ejemplos' | 'testimonios' | 'faqs'
 
+// Tab keys are internal state only — labels are what the user reads.
+const TAB_LABELS: Record<Tab, string> = {
+  ejemplos: 'Showcase',
+  testimonios: 'Testimonials',
+  faqs: 'FAQs',
+}
+
 export default function ContenidoPage() {
   const [tab, setTab] = useState<Tab>('ejemplos')
 
   return (
     <div className="flex-1 p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
-          Contenido
+        <p className="yele-eyebrow mb-2">Admin panel</p>
+        <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-display)', color: '#16161A' }}>
+          Content
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>
-          Gestiona proyectos, testimonios y FAQ del sitio público
+        <p className="text-sm mt-1" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>
+          Manage projects, testimonials and FAQs on the public site
         </p>
       </div>
 
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: '#F5F5F7', width: 'fit-content' }}>
+      <div className="flex items-center gap-1 p-1 rounded-full" style={{ backgroundColor: '#F2F0EB', width: 'fit-content' }}>
         {(['ejemplos', 'testimonios', 'faqs'] as Tab[]).map(t => (
-          <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+          <button key={t} className="yele-btn" style={tabBtn(tab === t)} onClick={() => setTab(t)}>
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>

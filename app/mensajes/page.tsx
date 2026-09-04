@@ -16,11 +16,11 @@ interface Message {
 }
 
 function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 function groupByDate(messages: Message[]) {
@@ -133,21 +133,21 @@ export default function MensajesPage() {
     <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
       <Sidebar />
       <main className="flex-1 flex flex-col dashboard-main" style={{ height: '100vh' }}>
-        <TopBar title="Mensajes" />
+        <TopBar title="Messages" />
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {clientError ? (
             <div className="py-20 text-center">
-              <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#991b1b' }}>
-                No se encontró tu perfil de cliente.
+              <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#B3382B' }}>
+                We couldn&apos;t find your client profile.
               </p>
             </div>
           ) : loading ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                  <div className="h-10 rounded-2xl" style={{ width: `${140 + i * 40}px`, backgroundColor: '#F5F5F7' }} />
+                  <div className="h-10 rounded-2xl" style={{ width: `${140 + i * 40}px`, backgroundColor: '#F2F0EB' }} />
                 </div>
               ))}
             </div>
@@ -155,8 +155,9 @@ export default function MensajesPage() {
             <div className="flex-1 flex items-center justify-center py-20">
               <div className="text-center">
                 <div className="text-3xl mb-3">💬</div>
-                <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
-                  Aún no hay mensajes. ¡Envía el primero!
+                <p className="yele-eyebrow mb-2">No messages yet</p>
+                <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
+                  Send the first one and we&apos;ll reply here.
                 </p>
               </div>
             </div>
@@ -165,11 +166,9 @@ export default function MensajesPage() {
               <div key={group.date} className="space-y-3">
                 {/* Date separator */}
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
-                  <span className="text-xs" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
-                    {formatDate(group.date)}
-                  </span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
+                  <div className="flex-1 yele-rule" />
+                  <span className="yele-eyebrow">{formatDate(group.date)}</span>
+                  <div className="flex-1 yele-rule" />
                 </div>
 
                 {group.messages.map((msg) => {
@@ -180,8 +179,8 @@ export default function MensajesPage() {
                         <div
                           className="px-4 py-2.5 text-sm leading-relaxed"
                           style={{
-                            backgroundColor: isClient ? '#1D1D1F' : '#F5F5F7',
-                            color: isClient ? '#FFFFFF' : '#1D1D1F',
+                            backgroundColor: isClient ? '#16161A' : '#F2F0EB',
+                            color: isClient ? '#FFFFFF' : '#16161A',
                             borderRadius: isClient ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                             fontFamily: 'var(--font-instrument)',
                           }}
@@ -190,7 +189,7 @@ export default function MensajesPage() {
                         </div>
                         <div
                           className={`text-xs mt-1 ${isClient ? 'text-right' : 'text-left'}`}
-                          style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
+                          style={{ fontFamily: 'var(--font-mono)', color: '#8A8A92' }}
                         >
                           {formatTime(msg.created_at)}
                         </div>
@@ -208,19 +207,19 @@ export default function MensajesPage() {
         {sendError && (
           <div
             className="mx-6 mb-2 px-4 py-3 rounded-xl text-sm flex items-start gap-2"
-            style={{ backgroundColor: '#FEF2F2', border: '1px solid rgba(239,68,68,0.2)', fontFamily: 'var(--font-instrument)' }}
+            style={{ backgroundColor: 'rgba(179,56,43,0.09)', border: '1px solid rgba(179,56,43,0.18)', fontFamily: 'var(--font-instrument)' }}
           >
-            <span style={{ color: '#DC2626', flexShrink: 0 }}>⚠</span>
-            <span style={{ color: '#7F1D1D' }}>
-              El chat no está disponible en este momento. Por favor contáctanos por{' '}
-              <a href="https://wa.me/8615021336924" style={{ color: '#DC2626', textDecoration: 'underline' }}>WhatsApp</a>
-              {' '}o{' '}
-              <a href="mailto:info@yele.design" style={{ color: '#DC2626', textDecoration: 'underline' }}>info@yele.design</a>.
+            <span style={{ color: '#B3382B', flexShrink: 0 }}>⚠</span>
+            <span style={{ color: '#B3382B' }}>
+              Chat isn&apos;t available right now. Reach us on{' '}
+              <a href="https://wa.me/8615021336924" style={{ color: '#B3382B', textDecoration: 'underline' }}>WhatsApp</a>
+              {' '}or{' '}
+              <a href="mailto:info@yele.design" style={{ color: '#B3382B', textDecoration: 'underline' }}>info@yele.design</a>.
             </span>
             <button
               onClick={() => setSendError(false)}
-              style={{ marginLeft: 'auto', flexShrink: 0, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}
-              aria-label="Cerrar"
+              style={{ marginLeft: 'auto', flexShrink: 0, color: '#B3382B', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}
+              aria-label="Dismiss"
             >×</button>
           </div>
         )}
@@ -228,7 +227,7 @@ export default function MensajesPage() {
         {/* Input area */}
         <div
           className="px-6 py-4 flex-shrink-0"
-          style={{ borderTop: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#FFFFFF' }}
+          style={{ borderTop: '1px solid rgba(22,22,26,0.08)', backgroundColor: '#FFFFFF' }}
         >
           <div className="flex items-end gap-3 max-w-3xl mx-auto">
             <textarea
@@ -236,34 +235,19 @@ export default function MensajesPage() {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe un mensaje… (Enter para enviar)"
+              placeholder="Write a message… (Enter to send)"
               rows={1}
-              className="flex-1 resize-none rounded-xl px-4 py-3 text-sm outline-none transition-all"
-              style={{
-                backgroundColor: '#F5F5F7',
-                border: '1px solid rgba(0,0,0,0.08)',
-                color: '#1D1D1F',
-                maxHeight: '100px',
-                fontFamily: 'var(--font-instrument)',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
+              className="yele-textarea flex-1 resize-none"
+              style={{ maxHeight: '100px', borderRadius: '18px' }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || sending}
-              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#1D1D1F' }}
-              onMouseEnter={(e) => { if (input.trim()) e.currentTarget.style.opacity = '0.9' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+              className="yele-btn yele-btn-primary flex-shrink-0"
+              style={{ width: '40px', height: '40px', padding: 0 }}
+              aria-label="Send message"
             >
-              <Send size={16} style={{ color: '#FFFFFF' }} />
+              <Send size={16} />
             </button>
           </div>
         </div>

@@ -8,14 +8,14 @@ import { useEffect, useState, useCallback } from 'react'
 import SupportButton from '@/components/SupportButton'
 
 const NAV_ITEMS = [
-  { label: 'Inicio',         href: '/dashboard',      icon: LayoutDashboard },
-  { label: 'Mi negocio',     href: '/negocio',        icon: Building2 },
-  { label: 'Contenido',      href: '/contenido',      icon: Layers },
-  { label: 'Mensajes',       href: '/mensajes',       icon: MessageSquare },
-  { label: 'Mi cuenta',      href: '/cuenta',         icon: Settings },
+  { label: 'Home',        href: '/dashboard', icon: LayoutDashboard },
+  { label: 'My business', href: '/negocio',   icon: Building2 },
+  { label: 'Content',     href: '/contenido', icon: Layers },
+  { label: 'Messages',    href: '/mensajes',  icon: MessageSquare },
+  { label: 'My account',  href: '/cuenta',    icon: Settings },
 ]
 
-const DISENO_STATUSES = ['building', 'revision']
+const DESIGN_STATUSES = ['building', 'revision']
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -98,32 +98,15 @@ export default function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors relative"
-        style={{
-          fontFamily: 'var(--font-instrument)',
-          fontWeight: isActive ? 500 : 400,
-          color: isActive ? '#1D1D1F' : '#86868B',
-          backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-            e.currentTarget.style.color = '#1D1D1F'
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = 'transparent'
-            e.currentTarget.style.color = '#86868B'
-          }
-        }}
+        className="yele-nav-item relative"
+        data-active={isActive}
       >
         <Icon size={16} strokeWidth={1.75} />
         <span>{item.label}</span>
         {isMessages && unreadCount > 0 && (
           <span
-            className="ml-auto text-xs font-semibold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
-            style={{ backgroundColor: '#C8A97E', color: '#FFFFFF' }}
+            className="ml-auto text-[11px] font-semibold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+            style={{ backgroundColor: '#D46FC8', color: '#FFFFFF', fontFamily: 'var(--font-instrument)' }}
           >
             {unreadCount}
           </span>
@@ -140,12 +123,12 @@ export default function Sidebar() {
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-xl transition-colors"
-        style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.08)' }}
-        aria-label="Abrir menú"
+        style={{ backgroundColor: '#F2F0EB', border: '1px solid rgba(22,22,26,0.08)' }}
+        aria-label="Toggle menu"
       >
         {mobileOpen
-          ? <X size={20} style={{ color: '#1D1D1F' }} />
-          : <Menu size={20} style={{ color: '#1D1D1F' }} />
+          ? <X size={20} style={{ color: '#16161A' }} />
+          : <Menu size={20} style={{ color: '#16161A' }} />
         }
       </button>
 
@@ -165,55 +148,47 @@ export default function Sidebar() {
         }`}
         style={{
           width: '240px',
-          backgroundColor: '#F5F5F7',
-          borderRight: '1px solid rgba(0,0,0,0.08)',
+          backgroundColor: '#F2F0EB',
+          borderRight: '1px solid rgba(22,22,26,0.08)',
         }}
       >
         {/* Logo + business name */}
         <div className="px-5 pt-6 pb-4">
-          <div
-            className="text-xl font-semibold mb-0.5"
-            style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
-          >
-            Yele
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#16161A' }}
+              aria-hidden
+            >
+              <span className="block w-2 h-2 rounded-full" style={{ backgroundColor: '#D46FC8' }} />
+            </span>
+            <span
+              className="text-xl font-semibold leading-none"
+              style={{ fontFamily: 'var(--font-display)', color: '#16161A', letterSpacing: '-0.02em' }}
+            >
+              yele
+            </span>
           </div>
-          <div className="text-xs truncate" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+          <div className="text-xs truncate" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
             {businessName ?? 'app.yele.design'}
           </div>
         </div>
 
-        <div style={{ height: '1px', backgroundColor: 'rgba(0,0,0,0.08)', margin: '0 20px' }} />
+        <div style={{ height: '1px', backgroundColor: 'rgba(22,22,26,0.08)', margin: '0 20px' }} />
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV_ITEMS.map(navLink)}
-          {clientStatus && DISENO_STATUSES.includes(clientStatus) && (() => {
+          {clientStatus && DESIGN_STATUSES.includes(clientStatus) && (() => {
             const isActive = pathname === '/diseno' || pathname.startsWith('/diseno/')
             return (
               <Link
                 href="/diseno"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-                style={{
-                  fontFamily: 'var(--font-instrument)',
-                  fontWeight: isActive ? 500 : 400,
-                  color: isActive ? '#1D1D1F' : '#86868B',
-                  backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-                    e.currentTarget.style.color = '#1D1D1F'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#86868B'
-                  }
-                }}
+                className="yele-nav-item"
+                data-active={isActive}
               >
                 <Palette size={16} strokeWidth={1.75} />
-                <span>Diseño</span>
+                <span>Design</span>
               </Link>
             )
           })()}
@@ -222,77 +197,54 @@ export default function Sidebar() {
         {/* Admin section */}
         {isAdmin && (
           <div className="px-3 pb-2">
-            <div className="px-3 py-2" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-              <span
-                className="text-xs uppercase tracking-widest"
-                style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-              >
-                Admin
-              </span>
+            <div className="px-3 py-2" style={{ borderTop: '1px solid rgba(22,22,26,0.08)' }}>
+              <span className="yele-eyebrow">Admin</span>
             </div>
             <Link
               href="/admin"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-                e.currentTarget.style.color = '#1D1D1F'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#86868B'
-              }}
+              className="yele-nav-item w-full"
             >
               <ShieldCheck size={16} strokeWidth={1.75} />
-              <span>Panel admin</span>
+              <span>Admin panel</span>
             </Link>
           </div>
         )}
 
         {/* Footer */}
-        <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px' }}>
+        <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(22,22,26,0.08)', paddingTop: '12px' }}>
           {email && (
-            <p className="px-3 pb-2 text-xs truncate" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
+            <p className="px-3 pb-2 text-xs truncate" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
               {email}
             </p>
           )}
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors"
-            style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#1D1D1F'
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#86868B'
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
+            className="yele-nav-item w-full"
           >
             <LogOut size={16} strokeWidth={1.75} />
-            <span>Cerrar sesión</span>
+            <span>Sign out</span>
           </button>
 
           {/* Legal links */}
-          <div className="px-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '8px' }}>
+          <div className="px-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: '1px solid rgba(22,22,26,0.06)', marginTop: '8px' }}>
             <Link
               href="/politica-de-privacidad"
               className="text-xs transition-colors"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#C7C7CC' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#C7C7CC' }}
+              style={{ fontFamily: 'var(--font-instrument)', color: '#D6D3CC' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#8A8A92' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#D6D3CC' }}
             >
-              Privacidad
+              Privacy
             </Link>
-            <span className="text-xs" style={{ color: '#C7C7CC' }}>·</span>
+            <span className="text-xs" style={{ color: '#D6D3CC' }}>·</span>
             <Link
               href="/terminos-de-uso"
               className="text-xs transition-colors"
-              style={{ fontFamily: 'var(--font-instrument)', color: '#C7C7CC' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#C7C7CC' }}
+              style={{ fontFamily: 'var(--font-instrument)', color: '#D6D3CC' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#8A8A92' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#D6D3CC' }}
             >
-              Términos de uso
+              Terms of use
             </Link>
           </div>
         </div>

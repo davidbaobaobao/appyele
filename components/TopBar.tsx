@@ -48,8 +48,8 @@ export default function TopBar({ title }: TopBarProps) {
     <header
       className="flex items-center justify-between px-6 h-16 flex-shrink-0"
       style={{
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.7)',
+        borderBottom: '1px solid rgba(22,22,26,0.08)',
+        backgroundColor: 'rgba(247,246,243,0.72)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -57,7 +57,7 @@ export default function TopBar({ title }: TopBarProps) {
       {/* Page title */}
       <h1
         className="text-base font-semibold pl-10 lg:pl-0"
-        style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}
+        style={{ fontFamily: 'var(--font-display)', color: '#16161A' }}
       >
         {title}
       </h1>
@@ -65,17 +65,17 @@ export default function TopBar({ title }: TopBarProps) {
       {/* User greeting + avatar */}
       <div className="flex items-center gap-3">
         {firstName && (
-          <span className="text-sm hidden sm:block" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
-            Hola, <span style={{ color: '#1D1D1F' }}>{firstName}</span>
+          <span className="text-sm hidden sm:block" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
+            Hi, <span style={{ color: '#16161A' }}>{firstName}</span>
           </span>
         )}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
           style={{
-            backgroundColor: 'rgba(200,169,126,0.15)',
-            color: '#C8A97E',
-            border: '1px solid rgba(200,169,126,0.3)',
-            fontFamily: 'var(--font-outfit)',
+            backgroundColor: 'rgba(212,111,200,0.15)',
+            color: '#D46FC8',
+            border: '1px solid rgba(212,111,200,0.3)',
+            fontFamily: 'var(--font-display)',
           }}
         >
           {initials}

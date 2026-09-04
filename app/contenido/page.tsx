@@ -11,14 +11,15 @@ import { revalidateYeleSite } from '@/lib/revalidate'
 
 // ── Admin-only Showcase Section ───────────────────────────────────────────────
 
-const S = {
-  card:       { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '16px' },
-  input:      { backgroundColor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#1D1D1F', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', outline: 'none', width: '100%', fontFamily: 'var(--font-instrument)' },
-  label:      { color: '#86868B', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-instrument)' },
-  btnPrimary: { backgroundColor: '#1D1D1F', color: '#FFFFFF', border: 'none', borderRadius: '10px', padding: '6px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
-  btnGhost:   { backgroundColor: 'transparent', color: '#1D1D1F', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', padding: '6px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
-  btnDanger:  { backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '10px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', fontFamily: 'var(--font-instrument)' },
+// Destructive actions keep the pill shape but carry the danger colour inline.
+const DANGER_BTN: React.CSSProperties = {
+  backgroundColor: 'rgba(179,56,43,0.09)',
+  color: '#B3382B',
+  border: '1px solid rgba(179,56,43,0.20)',
 }
+
+// Listing `type` values are stored in Supabase as-is; only their labels are English.
+const LISTING_TYPE_LABELS: Record<string, string> = { Venta: 'For sale', Alquiler: 'For rent' }
 
 interface ShowcaseProject {
   id?: string
@@ -81,40 +82,40 @@ function AdminShowcaseSection() {
       await Promise.all([revalidateYeleSite('/'), revalidateYeleSite('/ejemplos')])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      alert('Error guardando: ' + msg)
+      alert("Couldn't save: " + msg)
     } finally { setSaving(null) }
   }
 
   async function remove(idx: number) {
     const item = items[idx]
     if (!item.id) { setItems(prev => prev.filter((_, i) => i !== idx)); return }
-    if (!confirm('¿Eliminar este proyecto?')) return
+    if (!confirm('Delete this project?')) return
     await fetch(`/api/admin/showcase/${item.id}`, { method: 'DELETE' })
     setItems(prev => prev.filter((_, i) => i !== idx))
   }
 
-  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#86868B', fontFamily: 'var(--font-instrument)' }}>Cargando…</div>
+  if (loading) return <div className="py-8 text-center text-sm" style={{ color: '#8A8A92', fontFamily: 'var(--font-instrument)' }}>Loading…</div>
 
   return (
     <div className="space-y-4">
       {items.map((item, idx) => (
-        <div key={item.id ?? idx} style={S.card}>
+        <div key={item.id ?? idx} className="yele-card p-4">
           <div className="flex items-start gap-3">
-            <GripVertical size={16} style={{ color: '#86868B', marginTop: '2px', flexShrink: 0 }} />
+            <GripVertical size={16} style={{ color: '#8A8A92', marginTop: '2px', flexShrink: 0 }} />
             <div className="flex-1 grid grid-cols-1 gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label style={S.label}>Nombre</label>
-                  <input style={S.input} value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="El Taller · Cerámica, Gràcia" />
+                  <label className="yele-label">Name</label>
+                  <input className="yele-input" value={item.name} onChange={e => update(idx, { name: e.target.value })} placeholder="The Workshop · Ceramics, Brooklyn" />
                 </div>
                 <div>
-                  <label style={S.label}>Descripción</label>
-                  <input style={S.input} value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Breve descripción" />
+                  <label className="yele-label">Description</label>
+                  <input className="yele-input" value={item.description} onChange={e => update(idx, { description: e.target.value })} placeholder="Short description" />
                 </div>
               </div>
-              <ImageUploader label="Imagen principal" value={item.main_image} onChange={url => update(idx, { main_image: url })} />
+              <ImageUploader label="Main image" value={item.main_image} onChange={url => update(idx, { main_image: url })} />
               <div>
-                <label style={S.label}>Imágenes adicionales</label>
+                <label className="yele-label">Additional images</label>
                 <div className="space-y-2">
                   {item.additional_images.map((imgUrl, imgIdx) => (
                     <div key={imgIdx} className="flex items-start gap-2">
@@ -124,35 +125,36 @@ function AdminShowcaseSection() {
                           update(idx, { additional_images: next })
                         }} />
                       </div>
-                      <button type="button" onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
-                        style={{ ...S.btnDanger, padding: '6px', marginTop: '18px', flexShrink: 0 }}>
+                      <button type="button" aria-label="Remove image"
+                        onClick={() => update(idx, { additional_images: item.additional_images.filter((_, i) => i !== imgIdx) })}
+                        className="yele-btn" style={{ ...DANGER_BTN, padding: '8px', marginTop: '18px', flexShrink: 0 }}>
                         <X size={13} />
                       </button>
                     </div>
                   ))}
-                  <button type="button" style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', padding: '4px 10px' }}
+                  <button type="button" className="yele-btn yele-btn-secondary"
                     onClick={() => update(idx, { additional_images: [...item.additional_images, ''] })}>
-                    <Plus size={12} /> Añadir imagen
+                    <Plus size={12} /> Add image
                   </button>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button style={S.btnGhost} onClick={() => update(idx, { visible: !item.visible })}>
-                  {item.visible ? <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} /> : <EyeOff size={13} style={{ display: 'inline', marginRight: '4px' }} />}
-                  {item.visible ? 'Visible' : 'Oculto'}
+                <button className="yele-btn yele-btn-secondary" onClick={() => update(idx, { visible: !item.visible })}>
+                  {item.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                  {item.visible ? 'Visible' : 'Hidden'}
                 </button>
-                <button style={S.btnPrimary} onClick={() => save(idx)} disabled={saving === String(idx)}>
-                  <Save size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                  {saving === String(idx) ? 'Guardando…' : 'Guardar'}
+                <button className="yele-btn yele-btn-primary" onClick={() => save(idx)} disabled={saving === String(idx)}>
+                  <Save size={13} />
+                  {saving === String(idx) ? 'Saving…' : 'Save'}
                 </button>
-                <button style={S.btnDanger} onClick={() => remove(idx)}><Trash2 size={13} /></button>
+                <button aria-label="Delete project" className="yele-btn" style={{ ...DANGER_BTN, padding: '10px' }} onClick={() => remove(idx)}><Trash2 size={13} /></button>
               </div>
             </div>
           </div>
         </div>
       ))}
-      <button style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setItems(prev => [...prev, newItem()])}>
-        <Plus size={14} /> Añadir proyecto
+      <button className="yele-btn yele-btn-secondary" onClick={() => setItems(prev => [...prev, newItem()])}>
+        <Plus size={14} /> Add project
       </button>
     </div>
   )
@@ -160,75 +162,76 @@ function AdminShowcaseSection() {
 
 const SECTION_CONFIG: Record<string, { title: string; icon: React.ReactNode; fields: FieldDef[] }> = {
   catalog_items: {
-    title: 'Carta / Catálogo', icon: <UtensilsCrossed size={14} />,
+    title: 'Menu / Catalog', icon: <UtensilsCrossed size={14} />,
     fields: [
-      { key: 'name',        label: 'Nombre',      type: 'text',     required: true, placeholder: 'Ej. Paella valenciana' },
-      { key: 'category',    label: 'Categoría',   type: 'text',     placeholder: 'Ej. Arroces' },
-      { key: 'description', label: 'Descripción', type: 'textarea', placeholder: 'Describe el producto…' },
-      { key: 'price',       label: 'Precio',      type: 'text',     placeholder: 'Ej. 14,50 €' },
-      { key: 'image_url',   label: 'Imagen',      type: 'image' },
-      { key: 'available',   label: 'Disponible',  type: 'toggle' },
+      { key: 'name',        label: 'Name',        type: 'text',     required: true, placeholder: 'e.g. Grilled salmon' },
+      { key: 'category',    label: 'Category',    type: 'text',     placeholder: 'e.g. Mains' },
+      { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Describe the item…' },
+      { key: 'price',       label: 'Price',       type: 'text',     placeholder: 'e.g. $14.50' },
+      { key: 'image_url',   label: 'Image',       type: 'image' },
+      { key: 'available',   label: 'Available',   type: 'toggle' },
     ],
   },
   services: {
-    title: 'Servicios', icon: <Briefcase size={14} />,
+    title: 'Services', icon: <Briefcase size={14} />,
     fields: [
-      { key: 'name',        label: 'Nombre del servicio', type: 'text',     required: true },
-      { key: 'description', label: 'Descripción',         type: 'textarea' },
-      { key: 'price',       label: 'Precio',              type: 'text',     placeholder: 'Ej. Desde 50 €' },
-      { key: 'price_label', label: 'Etiqueta de precio',  type: 'text',     placeholder: 'Ej. Consultar' },
+      { key: 'name',        label: 'Service name', type: 'text',     required: true },
+      { key: 'description', label: 'Description',  type: 'textarea' },
+      { key: 'price',       label: 'Price',        type: 'text',     placeholder: 'e.g. From $50' },
+      { key: 'price_label', label: 'Price label',  type: 'text',     placeholder: 'e.g. On request' },
     ],
   },
   team_members: {
-    title: 'Equipo', icon: <Users size={14} />,
+    title: 'Team', icon: <Users size={14} />,
     fields: [
-      { key: 'name',      label: 'Nombre', type: 'text', required: true },
-      { key: 'role',      label: 'Cargo',  type: 'text' },
-      { key: 'photo_url', label: 'Foto',   type: 'image' },
+      { key: 'name',      label: 'Name',  type: 'text', required: true },
+      { key: 'role',      label: 'Role',  type: 'text' },
+      { key: 'photo_url', label: 'Photo', type: 'image' },
     ],
   },
   testimonials: {
-    title: 'Testimonios', icon: <Quote size={14} />,
+    title: 'Testimonials', icon: <Quote size={14} />,
     fields: [
-      { key: 'author_name', label: 'Nombre del autor', type: 'text',     required: true },
-      { key: 'role',        label: 'Cargo del autor',  type: 'text' },
-      { key: 'body',        label: 'Testimonio',       type: 'textarea', required: true },
-      { key: 'rating',      label: 'Valoración (1–5)', type: 'number',   placeholder: '5' },
+      { key: 'author_name', label: 'Author name', type: 'text',     required: true },
+      { key: 'role',        label: 'Author role', type: 'text' },
+      { key: 'body',        label: 'Testimonial', type: 'textarea', required: true },
+      { key: 'rating',      label: 'Rating (1–5)', type: 'number',   placeholder: '5' },
     ],
   },
   faqs: {
-    title: 'Preguntas frecuentes', icon: <HelpCircle size={14} />,
+    title: 'FAQs', icon: <HelpCircle size={14} />,
     fields: [
-      { key: 'question', label: 'Pregunta',  type: 'text',     required: true },
-      { key: 'answer',   label: 'Respuesta', type: 'textarea', required: true },
+      { key: 'question', label: 'Question', type: 'text',     required: true },
+      { key: 'answer',   label: 'Answer',   type: 'textarea', required: true },
     ],
   },
   offers: {
-    title: 'Ofertas', icon: <Tag size={14} />,
+    title: 'Offers', icon: <Tag size={14} />,
     fields: [
-      { key: 'title',       label: 'Título',           type: 'text',     required: true },
-      { key: 'badge',       label: 'Etiqueta (badge)', type: 'text',     placeholder: 'Ej. -20%' },
-      { key: 'description', label: 'Descripción',      type: 'textarea' },
-      { key: 'valid_until', label: 'Válido hasta',     type: 'date' },
+      { key: 'title',       label: 'Title',       type: 'text',     required: true },
+      { key: 'badge',       label: 'Badge',       type: 'text',     placeholder: 'e.g. -20%' },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'valid_until', label: 'Valid until', type: 'date' },
     ],
   },
   listings: {
-    title: 'Inmuebles', icon: <Home size={14} />,
+    title: 'Listings', icon: <Home size={14} />,
     fields: [
-      { key: 'title',    label: 'Título',          type: 'text',   required: true },
-      { key: 'type',     label: 'Tipo',            type: 'select', options: ['Venta', 'Alquiler'] },
-      { key: 'price',    label: 'Precio',          type: 'text' },
-      { key: 'size_m2',  label: 'Superficie (m²)', type: 'number' },
-      { key: 'rooms',    label: 'Habitaciones',    type: 'number' },
-      { key: 'location', label: 'Ubicación',       type: 'text' },
+      { key: 'title',    label: 'Title',      type: 'text',   required: true },
+      // Option values are the strings already stored in Supabase — only the labels are English.
+      { key: 'type',     label: 'Type',       type: 'select', options: ['Venta', 'Alquiler'], optionLabels: LISTING_TYPE_LABELS },
+      { key: 'price',    label: 'Price',      type: 'text' },
+      { key: 'size_m2',  label: 'Size (m²)',  type: 'number' },
+      { key: 'rooms',    label: 'Bedrooms',   type: 'number' },
+      { key: 'location', label: 'Location',   type: 'text' },
     ],
   },
   gallery: {
-    title: 'Galería', icon: <Image size={14} />,
+    title: 'Showcase', icon: <Image size={14} />,
     fields: [
-      { key: 'image_url', label: 'Imagen',      type: 'image' },
-      { key: 'caption',   label: 'Descripción', type: 'text' },
-      { key: 'category',  label: 'Categoría',   type: 'text' },
+      { key: 'image_url', label: 'Image',    type: 'image' },
+      { key: 'caption',   label: 'Caption',  type: 'text' },
+      { key: 'category',  label: 'Category', type: 'text' },
     ],
   },
 }
@@ -262,41 +265,41 @@ export default function ContenidoPage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: '#F7F6F3' }}>
       <Sidebar />
       <main className="flex-1 flex flex-col dashboard-main">
-        <TopBar title="Contenido" />
+        <TopBar title="Content" />
 
         <div className="flex-1 p-6 max-w-5xl space-y-8">
           <div>
-            <h2 className="text-3xl font-semibold mb-2" style={{ fontFamily: 'var(--font-outfit)', color: '#1D1D1F' }}>
-              Contenido
+            <h2 className="text-3xl font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: '#16161A' }}>
+              Content
             </h2>
-            <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
-              Gestiona el contenido dinámico de tu web
+            <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
+              Manage the dynamic content on your site
             </p>
           </div>
 
           {loading ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2].map((i) => (
-                <div key={i} className="rounded-2xl h-40" style={{ backgroundColor: '#F5F5F7' }} />
+                <div key={i} className="rounded-2xl h-40" style={{ backgroundColor: '#F2F0EB' }} />
               ))}
             </div>
           ) : (
             <div className="space-y-6">
               {isAdmin && (
                 <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ border: '1px solid rgba(200,169,126,0.25)', backgroundColor: '#FFFDF9' }}
+                  className="yele-card yele-card-lg overflow-hidden"
+                  style={{ boxShadow: '0 0 0 1px rgba(212,111,200,0.25)' }}
                 >
                   <div
                     className="flex items-center gap-2 px-4 py-3"
-                    style={{ backgroundColor: 'rgba(200,169,126,0.08)', borderBottom: '1px solid rgba(200,169,126,0.2)' }}
+                    style={{ backgroundColor: 'rgba(212,111,200,0.08)', borderBottom: '1px solid rgba(212,111,200,0.2)' }}
                   >
-                    <Image size={14} style={{ color: '#C8A97E' }} />
-                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-outfit)', color: '#92400e' }}>
-                      Proyectos de ejemplo (Ejemplos)
+                    <Image size={14} style={{ color: '#D46FC8' }} />
+                    <span className="yele-eyebrow" style={{ color: '#8A5A16' }}>
+                      Sample projects (Examples)
                     </span>
                   </div>
                   <div className="p-4">
@@ -306,15 +309,12 @@ export default function ContenidoPage() {
               )}
 
               {!clientId ? null : dynamicSections.length === 0 && !isAdmin ? (
-                <div
-                  className="rounded-2xl p-8 text-center"
-                  style={{ backgroundColor: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}
-                >
-                  <p className="text-sm mb-1" style={{ fontFamily: 'var(--font-instrument)', color: '#1D1D1F' }}>
-                    No tienes secciones dinámicas configuradas.
+                <div className="yele-card-quiet p-8 text-center">
+                  <p className="text-sm mb-1" style={{ fontFamily: 'var(--font-instrument)', color: '#16161A' }}>
+                    No dynamic sections are set up yet.
                   </p>
-                  <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#86868B' }}>
-                    Escríbenos si quieres añadir esta funcionalidad.
+                  <p className="text-sm" style={{ fontFamily: 'var(--font-instrument)', color: '#8A8A92' }}>
+                    Get in touch if you’d like to add this.
                   </p>
                 </div>
               ) : (
